@@ -1,4 +1,6 @@
 
+#include "blasfunctions.h"
+
 #include <stddef.h>
 #if _WIN32
 #include <windows.h>
