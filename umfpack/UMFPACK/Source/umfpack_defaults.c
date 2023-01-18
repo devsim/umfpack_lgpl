@@ -66,6 +66,7 @@ GLOBAL void UMFPACK_defaults
 #ifdef NBLAS
     /* do not use the BLAS - use in-line C code instead */
     Control [UMFPACK_COMPILED_WITH_BLAS] = 0 ;
+#error "FIX THIS"
 #else
     /* use externally-provided BLAS (dgemm, dger, dgemv, zgemm, zgeru, zgemv) */
     Control [UMFPACK_COMPILED_WITH_BLAS] = 1 ;
@@ -74,10 +75,12 @@ GLOBAL void UMFPACK_defaults
 #ifdef MATLAB_MEX_FILE
     /* compiled as a MATLAB mexFunction */ 
     Control [UMFPACK_COMPILED_FOR_MATLAB] = 1 ;
+#error "FIX THIS"
 #else
 #ifdef MATHWORKS
     /* compiled for internal use in MATLAB */ 
     Control [UMFPACK_COMPILED_FOR_MATLAB] = 2 ;
+#error "FIX THIS"
 #else
     /* use ANSI C malloc, free, realloc, and printf */
     Control [UMFPACK_COMPILED_FOR_MATLAB] = 0 ;
