@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES(../../AMD/Include ../../UFconfig ../Include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/AMD/Include ${CMAKE_SOURCE_DIR}/UFconfig ../Include)
 SET (GLOBAL_SRCS 
 	umfpack_global.c
 	umfpack_tictoc.c
