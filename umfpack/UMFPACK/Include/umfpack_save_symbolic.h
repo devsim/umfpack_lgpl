@@ -8,6 +8,7 @@
 /* web: http://www.cise.ufl.edu/research/sparse/umfpack                       */
 /* -------------------------------------------------------------------------- */
 
+UMFPACK_PUBLIC
 int umfpack_di_save_symbolic
 (
     void *Symbolic,

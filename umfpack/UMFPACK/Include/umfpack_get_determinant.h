@@ -9,6 +9,7 @@
 /* UMFPACK_get_determinant contributed by David Bateman, Motorola, Paris. */
 /* -------------------------------------------------------------------------- */
 
+UMFPACK_PUBLIC
 int umfpack_di_get_determinant
 (
     double *Mx,

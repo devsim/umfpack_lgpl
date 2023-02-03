@@ -64,6 +64,14 @@ extern "C" {
 #endif
 #endif
 
+#if defined _WIN32
+#define UMFPACK_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+#define UMFPACK_LOCAL __declspec(dllimport)
+#else
+#define UMFPACK_PUBLIC __attribute__ ((visibility("default")))
+#define UMFPACK_LOCAL  __attribute__ ((visibility("hidden")))
+#endif
+
 /* ========================================================================== */
 /* === SuiteSparse version ================================================== */
 /* ========================================================================== */

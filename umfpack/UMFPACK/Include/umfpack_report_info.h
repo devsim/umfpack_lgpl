@@ -8,6 +8,7 @@
 /* web: http://www.cise.ufl.edu/research/sparse/umfpack                       */
 /* -------------------------------------------------------------------------- */
 
+UMFPACK_PUBLIC
 void umfpack_di_report_info
 (
     const double Control [UMFPACK_CONTROL],
