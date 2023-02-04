@@ -1,7 +1,9 @@
 
 #include "blasfunctions.h"
 
+#include <stdio.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <assert.h>
 #if _WIN32
 #include <windows.h>
@@ -210,4 +212,33 @@ void *blasw_load_dll(const char *dllname, const char **error)
 #endif
   return dll_p;
 }
+
+/* see amd_global.c */
+extern int (*amd_printf) (const char *, ...);        /* pointer to printf */
+
+void blasw_set_printf_function(blasw_printf_function_type pf)
+{
+  amd_printf = pf;
+}
+
+static blasw_rawprint_cb *rawprint_cb = NULL;
+
+static blasw_rawprint_helper(const char *msg, ...)
+{
+  static char buf[8192];
+  va_list args;
+  va_start(args, msg);
+  vsnprintf(buf, 8192, msg, args);
+  va_end(args);
+  assert(rawprint_cb);
+  rawprint_cb(buf);
+}
+
+void blasw_set_printer_callback(blasw_rawprint_cb rpcb)
+{
+  assert(rpcb);
+  rawprint_cb = rpcb;
+  amd_printf = blasw_rawprint_helper;
+}
+
 

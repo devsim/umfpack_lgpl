@@ -1,6 +1,28 @@
 from ctypes import *
 
 dll = cdll.LoadLibrary('libumfpack.so')
+
+#pprefix = True
+#
+#def myprintcb(msg):
+#  global pprefix
+#  if pprefix:
+#    print("DEBUG: ", end="")
+#  pmsg = msg.decode("utf-8")
+#  print(pmsg, end="")
+#  pprefix = pmsg[-1] == "\n"
+
+def myprintcb(msg):
+  pmsg = msg.decode("utf-8")
+  pmsg = pmsg.replace("\n", "\nDEBUG: ")
+  print(pmsg, end="")
+
+CALLBACK = CFUNCTYPE(None, c_char_p)
+dll.blasw_set_printer_callback.argtypes = [CALLBACK]
+dll.blasw_set_printer_callback.restype = None
+dcb = CALLBACK(myprintcb)
+dll.blasw_set_printer_callback(dcb)
+
 #print(dll.blasw_load_dll)
 libname = c_char_p(b'libopenblas.so')
 msg = c_char_p()
@@ -380,7 +402,7 @@ if status < 0:
 print ("\nx (with modified A): ")
 dll.umfpack_di_report_vector (n, x, Control)
 rnorm = resid (False, Ap, Ai, Ax)
-print ("maxnorm of residual: %g\n\n", rnorm)
+print ("maxnorm of residual: %g\n\n" % rnorm)
 ##
 ##    /* ---------------------------------------------------------------------- */
 ##    /* modify all of the numerical values of A, but not the pattern */
@@ -391,7 +413,7 @@ for col in range(n):
     row = Ai [p]
     print ("changing A (%d,%d) from %g" % (row, col, Ax [p]), end="")
     Ax [p] = Ax [p] + col*10 - row
-    print (" to %g\n", Ax [p])
+    print (" to %g\n" % Ax[p])
 print ("\ncompletely modified A (same pattern): ")
 dll.umfpack_di_report_matrix (n, n, Ap, Ai, Ax, 1, Control)
 ##
@@ -441,7 +463,7 @@ if (status < 0):
 print ("\nx (with completely modified A): ")
 dll.umfpack_di_report_vector (n, x, Control)
 rnorm = resid (False, Ap, Ai, Ax)
-print ("maxnorm of residual: %g\n\n", rnorm)
+print ("maxnorm of residual: %g\n\n" % rnorm)
 
 ##    /* ---------------------------------------------------------------------- */
 ##    /* free the symbolic and numeric factorization */
@@ -522,7 +544,7 @@ print ("\nNote that the column ordering, above, will be refined\n")
 print ("in the numeric factorization below.  The assignment of pivot\n")
 print ("columns to frontal matrices will always remain unchanged.\n")
 
-print ("\nTotal number of pivot columns in frontal matrices: %d\n", k)
+print ("\nTotal number of pivot columns in frontal matrices: %d\n" % k)
 
 print ("\nFrontal matrix chains:\n")
 for j in range(nchains.value):
@@ -633,7 +655,7 @@ if (status < 0):
 print ("\nx (solution of C'x=b): ")
 dll.umfpack_di_report_vector (n, x, Control)
 rnorm = resid (True, Cp, Ci, Cx)
-print ("maxnorm of residual: %g\n\n", rnorm)
+print ("maxnorm of residual: %g\n\n" % rnorm)
 ##
 ##    /* ---------------------------------------------------------------------- */
 ##    /* solve C'x=b again, using dll.umfpack_di_wsolve instead */
@@ -651,7 +673,7 @@ if (status < 0):
 print ("\nx (solution of C'x=b): ")
 dll.umfpack_di_report_vector (n, x, Control)
 rnorm = resid (True, Cp, Ci, Cx)
-print ("maxnorm of residual: %g\n\n", rnorm)
+print ("maxnorm of residual: %g\n\n" % rnorm)
 ##
 dll.umfpack_di_free_symbolic (byref(Symbolic))
 dll.umfpack_di_free_numeric (byref(Numeric))

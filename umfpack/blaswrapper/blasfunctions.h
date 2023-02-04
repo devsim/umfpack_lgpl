@@ -20,6 +20,16 @@ int blasw_load_functions(void *dll_p);
 BLASWRAPPER_PUBLIC
 void *blasw_load_dll(const char *dllname, const char **error);
 
+typedef int (blasw_printf_function_type)(const char *, ...);
+
+BLASWRAPPER_PUBLIC
+void blasw_set_printf_function(blasw_printf_function_type);
+
+typedef void (blasw_rawprint_cb) (const char *);        /* pointer to preformatted string printer */
+
+BLASWRAPPER_PUBLIC
+void blasw_set_printer_callback(blasw_rawprint_cb);
+
 #ifdef __cplusplus
 }
 #endif

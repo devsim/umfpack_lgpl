@@ -1,5 +1,17 @@
-#include <stdio.h>
 #include "blasfunctions.h"
+#include <stdio.h>
+
+static int pprefix = 1;
+static void myrp(const char *msg)
+{
+  if (pprefix)
+  {
+    printf("UMF: ");
+  }
+  int pc = printf("UMF: %s", msg);
+  pprefix = (pc > 0) && (msg[pc] == '\n');
+}
+
 extern void umfpack_di_demo();
 int main (int argc, char **argv)
 {
@@ -19,6 +31,7 @@ int main (int argc, char **argv)
     return -1;
   }
 
+  blasw_set_printer_callback(myrp);
   umfpack_di_demo();
   return 0;
 }
