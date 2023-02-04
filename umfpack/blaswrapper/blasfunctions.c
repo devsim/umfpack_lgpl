@@ -2,6 +2,7 @@
 #include "blasfunctions.h"
 
 #include <stddef.h>
+#include <assert.h>
 #if _WIN32
 #include <windows.h>
 #else
@@ -57,23 +58,25 @@ struct symtable {
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
+#define TOBLASSTRING(x) STRINGIFY(x) "_"
 
 static struct symtable math_function_table[] = {
-  {TOSTRING(dgemm), (void **) &(blas_tab.dgemm)},
-  {TOSTRING(dgemv), (void **) &(blas_tab.dgemv)},
-  {TOSTRING(dger), (void **) &(blas_tab.dger)},
-  {TOSTRING(dtrsm), (void **) &(blas_tab.dtrsm)},
-  {TOSTRING(dtrsv), (void **) &(blas_tab.dtrsv)},
-  {TOSTRING(zgemm), (void **) &(blas_tab.zgemm)},
-  {TOSTRING(zgemv), (void **) &(blas_tab.zgemv)},
-  {TOSTRING(zgeru), (void **) &(blas_tab.zgeru)},
-  {TOSTRING(ztrsm), (void **) &(blas_tab.ztrsm)},
-  {TOSTRING(ztrsv), (void **) &(blas_tab.ztrsv)},
+  {TOBLASSTRING(dgemm), (void **) &(blas_tab.dgemm)},
+  {TOBLASSTRING(dgemv), (void **) &(blas_tab.dgemv)},
+  {TOBLASSTRING(dger), (void **) &(blas_tab.dger)},
+  {TOBLASSTRING(dtrsm), (void **) &(blas_tab.dtrsm)},
+  {TOBLASSTRING(dtrsv), (void **) &(blas_tab.dtrsv)},
+  {TOBLASSTRING(zgemm), (void **) &(blas_tab.zgemm)},
+  {TOBLASSTRING(zgemv), (void **) &(blas_tab.zgemv)},
+  {TOBLASSTRING(zgeru), (void **) &(blas_tab.zgeru)},
+  {TOBLASSTRING(ztrsm), (void **) &(blas_tab.ztrsm)},
+  {TOBLASSTRING(ztrsv), (void **) &(blas_tab.ztrsv)},
   NULL, NULL
 };
 
 void dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc)
 {
+  assert(blas_tab.dgemm);
   blas_tab.dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
 
@@ -82,51 +85,60 @@ void dgemv_(char *trans, int *m, int *n,
                               int *lda, double *x, int *incx,
                               double *beta, double *y, int *incy)
 {
+  assert(blas_tab.dgemv);
   blas_tab.dgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy);
 }
 
 void dger_(int *m, int *n, double *alpha, double *x, int *incx, double *y, int *incy, double *a, int *lda)
 {
+  assert(blas_tab.dger);
   blas_tab.dger(m, n, alpha, x, incx, y, incy, a, lda);
 }
 
 void dtrsm_(char *side, char *uplo, char *transa, char *diag, int *m, int *n, double *alpha, double *a, int *lda, double *b, int *ldb)
 {
+  assert(blas_tab.dtrsm);
   blas_tab.dtrsm(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
 }
 
 void dtrsv_(char *a, char *b, char *c, int *d, double *e, int *f, double *g, int *h)
 {
+  assert(blas_tab.dtrsv);
   blas_tab.dtrsv(a, b, c, d, e, f, g, h);
 }
 
 void   zgemm_(char *transa, char *transb, int *m, int *n, int *k, doublecomplex *alpha, doublecomplex *a, int *lda, doublecomplex *b, int *ldb, doublecomplex *beta, doublecomplex *c, int *ldc)
 {
+  assert(blas_tab.zgemm);
   blas_tab.zgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
 
 
 void   zgemv_(char *trans, int *m, int *n, doublecomplex *alpha, doublecomplex *a, int *lda, doublecomplex *x, int *incx, doublecomplex *beta, doublecomplex *y, int *incy)
 {
+  assert(blas_tab.zgemv);
   blas_tab.zgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy);
 }
 
 void zgeru_(int *m, int *n, doublecomplex *alpha, doublecomplex *x, int *incx, doublecomplex *y, int *incy, doublecomplex *a, int *lda)
 {
+  assert(blas_tab.zgeru);
   blas_tab.zgeru(m, n, alpha, x, incx, y, incy, a, lda);
 }
 
 void   ztrsm_(char *side, char *uplo, char *transa, char *diag, int *m, int *n, doublecomplex *alpha, doublecomplex *a, int *lda, doublecomplex *b, int *ldb)
 {
+  assert(blas_tab.ztrsm);
   blas_tab.ztrsm(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
 }
 
 void   ztrsv_(char *uplo, char *trans, char *diag, int *n, doublecomplex *a, int *lda, doublecomplex *x, int *incx)
 {
+  assert(blas_tab.ztrsv);
   blas_tab.ztrsv(uplo, trans, diag, n, a, lda, x, incx);
 }
 
-void clear_table()
+void blasw_clear_table()
 {
   struct symtable *tbl = math_function_table;
   while (tbl->symbol_name)
@@ -136,7 +148,7 @@ void clear_table()
   }
 }
 
-int load_functions(void *dll_p)
+int blasw_load_functions(void *dll_p)
 {
   int missing_count = 0;
   struct symtable *tbl = math_function_table;
@@ -158,7 +170,8 @@ int load_functions(void *dll_p)
 }
 
 /* TODO: load using dlopen */
-void *load_dll(const char *dllname, const char **error)
+/* TODO: close things up */
+void *blasw_load_dll(const char *dllname, const char **error)
 {
   *error = NULL;
 #if defined(_WIN32)
