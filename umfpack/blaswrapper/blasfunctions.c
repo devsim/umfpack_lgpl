@@ -71,7 +71,7 @@ static struct symtable math_function_table[] = {
   {TOBLASSTRING(zgeru), (void **) &(blas_tab.zgeru)},
   {TOBLASSTRING(ztrsm), (void **) &(blas_tab.ztrsm)},
   {TOBLASSTRING(ztrsv), (void **) &(blas_tab.ztrsv)},
-  NULL, NULL
+  {NULL, NULL}
 };
 
 void dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc)
