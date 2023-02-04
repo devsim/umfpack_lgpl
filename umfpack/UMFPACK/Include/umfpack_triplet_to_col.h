@@ -37,6 +37,7 @@ UF_long umfpack_dl_triplet_to_col
     UF_long Map [ ]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_triplet_to_col
 (
     int n_row,

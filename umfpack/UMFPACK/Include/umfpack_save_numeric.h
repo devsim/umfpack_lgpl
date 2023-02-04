@@ -21,6 +21,7 @@ UF_long umfpack_dl_save_numeric
     char *filename
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_save_numeric
 (
     void *Numeric,

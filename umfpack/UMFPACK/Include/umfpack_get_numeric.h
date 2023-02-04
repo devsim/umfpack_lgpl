@@ -41,6 +41,7 @@ UF_long umfpack_dl_get_numeric
     void *Numeric
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_get_numeric
 (
     int Lp [ ],

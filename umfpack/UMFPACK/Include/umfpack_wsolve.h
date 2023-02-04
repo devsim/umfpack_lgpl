@@ -39,6 +39,7 @@ UF_long umfpack_dl_wsolve
     double W [ ]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_wsolve
 (
     int sys,

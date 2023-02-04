@@ -21,6 +21,7 @@ void umfpack_dl_report_status
     UF_long status
 ) ;
 
+UMFPACK_PUBLIC
 void umfpack_zi_report_status
 (
     const double Control [UMFPACK_CONTROL],

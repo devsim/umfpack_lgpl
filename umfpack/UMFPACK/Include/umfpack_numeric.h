@@ -31,6 +31,7 @@ UF_long umfpack_dl_numeric
     double Info [UMFPACK_INFO]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_numeric
 (
     const int Ap [ ],

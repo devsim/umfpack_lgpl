@@ -31,6 +31,7 @@ UF_long umfpack_dl_report_triplet
     const double Control [UMFPACK_CONTROL]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_report_triplet
 (
     int n_row,

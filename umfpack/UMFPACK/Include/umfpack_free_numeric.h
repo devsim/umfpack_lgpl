@@ -19,6 +19,7 @@ void umfpack_dl_free_numeric
     void **Numeric
 ) ;
 
+UMFPACK_PUBLIC
 void umfpack_zi_free_numeric
 (
     void **Numeric

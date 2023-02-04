@@ -21,6 +21,7 @@ void umfpack_dl_report_info
     const double Info [UMFPACK_INFO]
 ) ;
 
+UMFPACK_PUBLIC
 void umfpack_zi_report_info
 (
     const double Control [UMFPACK_CONTROL],

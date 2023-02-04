@@ -23,6 +23,7 @@ UF_long umfpack_dl_scale
     void *Numeric
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_scale
 (
     double Xx [ ],	 double Xz [ ],

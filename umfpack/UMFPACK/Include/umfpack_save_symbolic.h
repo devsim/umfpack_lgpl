@@ -21,6 +21,7 @@ UF_long umfpack_dl_save_symbolic
     char *filename
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_save_symbolic
 (
     void *Symbolic,

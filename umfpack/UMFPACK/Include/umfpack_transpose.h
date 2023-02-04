@@ -37,6 +37,7 @@ UF_long umfpack_dl_transpose
     double Rx [ ]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_transpose
 (
     int n_row,

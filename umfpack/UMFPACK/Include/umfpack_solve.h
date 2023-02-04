@@ -35,6 +35,7 @@ UF_long umfpack_dl_solve
     double Info [UMFPACK_INFO]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_solve
 (
     int sys,

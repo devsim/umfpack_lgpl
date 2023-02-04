@@ -33,6 +33,7 @@ UF_long umfpack_dl_symbolic
     double Info [UMFPACK_INFO]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_symbolic
 (
     int n_row,

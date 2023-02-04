@@ -19,6 +19,7 @@ void umfpack_dl_free_symbolic
     void **Symbolic
 ) ;
 
+UMFPACK_PUBLIC
 void umfpack_zi_free_symbolic
 (
     void **Symbolic

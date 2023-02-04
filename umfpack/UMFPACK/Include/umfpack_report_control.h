@@ -19,6 +19,7 @@ void umfpack_dl_report_control
     const double Control [UMFPACK_CONTROL]
 ) ;
 
+UMFPACK_PUBLIC
 void umfpack_zi_report_control
 (
     const double Control [UMFPACK_CONTROL]

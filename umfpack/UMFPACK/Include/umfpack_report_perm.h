@@ -23,6 +23,7 @@ UF_long umfpack_dl_report_perm
     const double Control [UMFPACK_CONTROL]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_report_perm
 (
     int np,

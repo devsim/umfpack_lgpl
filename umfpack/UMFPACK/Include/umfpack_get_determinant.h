@@ -26,6 +26,7 @@ UF_long umfpack_dl_get_determinant
     double User_Info [UMFPACK_INFO]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_get_determinant
 (
     double *Mx,

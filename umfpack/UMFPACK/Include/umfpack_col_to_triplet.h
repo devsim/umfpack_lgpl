@@ -23,6 +23,7 @@ UF_long umfpack_dl_col_to_triplet
     UF_long Tj [ ]
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_col_to_triplet
 (
     int n_col,

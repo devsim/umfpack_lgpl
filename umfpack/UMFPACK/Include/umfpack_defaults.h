@@ -19,6 +19,7 @@ void umfpack_dl_defaults
     double Control [UMFPACK_CONTROL]
 ) ;
 
+UMFPACK_PUBLIC
 void umfpack_zi_defaults
 (
     double Control [UMFPACK_CONTROL]

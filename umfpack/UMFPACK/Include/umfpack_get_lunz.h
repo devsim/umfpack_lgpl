@@ -29,6 +29,7 @@ UF_long umfpack_dl_get_lunz
     void *Numeric
 ) ;
 
+UMFPACK_PUBLIC
 int umfpack_zi_get_lunz
 (
     int *lnz,
