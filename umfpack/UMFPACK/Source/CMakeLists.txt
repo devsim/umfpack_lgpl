@@ -258,3 +258,6 @@ $<TARGET_OBJECTS:GROUP16_OBJS>
 )
 TARGET_LINK_LIBRARIES(umfpack PRIVATE amd blaswrapper -lm)
 
+#add_custom_command(TARGET umfpack POST_BUILD
+#	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:umfpack> ${CMAKE_BINARY_DIR}/testwrapper/${CMAKE_BUILD_TYPE}/
+#)

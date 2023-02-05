@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <assert.h>
-#if _WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <dlfcn.h>
@@ -177,7 +177,7 @@ void *blasw_load_dll(const char *dllname, const char **error)
 {
   *error = NULL;
 #if defined(_WIN32)
-  HINSTANCE__ *dll_p = NULL;
+  HINSTANCE *dll_p = NULL;
 #else
   void *dll_p = NULL;
 #endif
@@ -188,7 +188,7 @@ void *blasw_load_dll(const char *dllname, const char **error)
   }
 
 #if defined(_WIN32)
-  *dll_p = LoadLibrary(dllname);
+  dll_p = LoadLibrary(dllname);
 #else
 #if defined(__APPLE__)
   int dllflags = RTLD_LOCAL | RTLD_NOW;
