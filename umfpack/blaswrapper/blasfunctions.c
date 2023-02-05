@@ -223,15 +223,16 @@ void blasw_set_printf_function(blasw_printf_function_type pf)
 
 static blasw_rawprint_cb *rawprint_cb = NULL;
 
-static blasw_rawprint_helper(const char *msg, ...)
+static int blasw_rawprint_helper(const char *msg, ...)
 {
   static char buf[8192];
   va_list args;
   va_start(args, msg);
-  vsnprintf(buf, 8192, msg, args);
+  int cnt = vsnprintf(buf, 8192, msg, args);
   va_end(args);
   assert(rawprint_cb);
   rawprint_cb(buf);
+  return cnt;
 }
 
 void blasw_set_printer_callback(blasw_rawprint_cb rpcb)

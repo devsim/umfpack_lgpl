@@ -14,7 +14,7 @@ dll = cdll.LoadLibrary('libumfpack.so')
 
 def myprintcb(msg):
   pmsg = msg.decode("utf-8")
-  pmsg = pmsg.replace("\n", "\nDEBUG: ")
+  pmsg = pmsg.replace("\n", "\nUMF: ")
   print(pmsg, end="")
 
 CALLBACK = CFUNCTYPE(None, c_char_p)
