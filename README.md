@@ -9,3 +9,7 @@ The ``umfpack/blaswrapper`` directory is in development and will be a dll shim m
 
 The build system for this project is ``CMAKE``.  The symbol visibility specified in the ``CMakeLists.txt`` files is hidden.  These symbols will be exposed as necessary to get a working implementation.
 
+Since this is a fork from a large repository, it is most efficient to do a shallow clone:
+```
+git clone -depth 1 https://github.com/tcaduser/umfpack_lgpl.git
+```

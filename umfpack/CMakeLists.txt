@@ -12,7 +12,9 @@ ELSE ()
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -Wall -Wno-unknown-pragmas -Werror=implicit-function-declaration -Werror=format-security")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 ENDIF()
-#SET(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
 ADD_SUBDIRECTORY(AMD/Source)
 ADD_SUBDIRECTORY(blaswrapper)
 ADD_SUBDIRECTORY(UMFPACK/Source)
