@@ -27,6 +27,7 @@ int main()
   blasw_clear_table();
   testload("libfoo.so");
   testload("libopenblas.so");
+  testload("mkl_rt.2.dll");
 
 }
 

@@ -16,7 +16,7 @@ extern void umfpack_di_demo();
 int main (int argc, char **argv)
 {
   const char *msg = NULL;
-  void *dll = blasw_load_dll("libopenblas.so", &msg);
+  void *dll = blasw_load_dll("mkl_rt.2.dll", &msg);
   if (!dll)
   {
     printf("%s\n", msg);

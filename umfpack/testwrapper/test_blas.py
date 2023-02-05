@@ -1,6 +1,7 @@
 from ctypes import *
 
-dll = cdll.LoadLibrary('libumfpack.so')
+#dll = cdll.LoadLibrary('libumfpack.so')
+dll = cdll.LoadLibrary('./umfpack.dll')
 
 #pprefix = True
 #
@@ -24,13 +25,14 @@ dcb = CALLBACK(myprintcb)
 dll.blasw_set_printer_callback(dcb)
 
 #print(dll.blasw_load_dll)
-libname = c_char_p(b'libopenblas.so')
+libname = c_char_p(b'mkl_rt.2.dll')
 msg = c_char_p()
 dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
 dll.blasw_load_dll.restype = c_void_p
 h = dll.blasw_load_dll(libname, byref(msg))
-if msg:
-  print(string_at(msg))
+if not h or msg:
+  if msg:
+      print(string_at(msg))
   raise RuntimeError("NO DLL LOADED")
 #print(h)
 
