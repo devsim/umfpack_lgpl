@@ -1,6 +1,13 @@
 from ctypes import *
+from ctypes.util import find_library
 
-dll = cdll.LoadLibrary('libumfpack.dylib')
+blasname = find_library('blas')
+umfpackname = find_library('umfpack')
+if not umfpackname:
+  raise RuntimeError("Cannot find UMFPACK dll")
+dll = cdll.LoadLibrary(umfpackname)
+
+
 #dll = cdll.LoadLibrary('./umfpack.dll')
 
 #pprefix = True
@@ -25,7 +32,7 @@ dcb = CALLBACK(myprintcb)
 dll.blasw_set_printer_callback(dcb)
 
 #print(dll.blasw_load_dll)
-libname = c_char_p(b'libblas.dylib')
+libname = c_char_p(blasname.encode('utf-8'))
 #libname = c_char_p(b'mkl_rt.2.dll')
 msg = c_char_p()
 dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
