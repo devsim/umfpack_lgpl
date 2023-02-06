@@ -1,8 +1,12 @@
 from ctypes import *
-from ctypes.util import find_library
+#import ctypes.util
 
-blasname = find_library('blas')
-umfpackname = find_library('umfpack')
+blasname = 'libblas.dylib'
+umfpackname = 'libumfpack.dylib'
+
+#blasname = ctypes.util.find_library('blas')
+
+dll = cdll.LoadLibrary(umfpackname)
 if not umfpackname:
   raise RuntimeError("Cannot find UMFPACK dll")
 dll = cdll.LoadLibrary(umfpackname)
