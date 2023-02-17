@@ -147,3 +147,96 @@ def set_python_print_callback(dll):
 def get_info():
     return (c_int * uml.UMFPACK_INFO)();
 
+class umf_control:
+    def __init__(self, dll):
+        self.timer = None
+        self.dll = dll
+        self.Control = None
+
+    def tic(self):
+        self.timer = (c_double * 2)()
+        self.dll.umfpack_tic(byref(self.timer))
+
+    def toc(self):
+        self.dll.umfpack_toc (self.timer)
+        print ("\numfpack_di_demo complete.\nTotal time: %5.2f seconds (CPU time), %5.2f seconds (wallclock time)\n" % ( self.timer [1], self.timer [0]))
+
+    def set_defaults(self):
+        self.Control = (c_double * UMFPACK_CONTROL)()
+        self.dll.umfpack_di_defaults(byref(self.Control))
+    def init_verbose(self):
+        #    /* change the default print level for this demo */
+        #    /* (otherwise, nothing will print) */
+        self.Control [UMFPACK_PRL] = 6
+        #    /* print the license agreement */
+        self.dll.umfpack_di_report_status (self.Control, UMFPACK_OK)
+        self.Control [UMFPACK_PRL] = 5
+        #
+        #    /* print the control parameters */
+        self.dll.umfpack_di_report_control(self.Control)
+
+    def print_vector(self, b, label):
+        #    /* print the right-hand-side */
+        print ("\n%s: " % (label,), flush=True, end="")
+        self.dll.umfpack_di_report_vector (len(b), b, self.Control)
+
+    def print_triplet(self, Arow, Acol, Aval):
+        print ("\nA: ")
+        n = max(Arow) + 1
+        nz = len(Arow)
+        #print(n)
+        #print(nz)
+        self.dll.umfpack_di_report_triplet(n, n, nz, Arow, Acol, Aval, self.Control)
+
+    def triplet_to_col(self, Arow, Acol, Aval, Ap, Ai, Ax):
+        n = max(Arow) + 1
+        nz = len(Arow)
+        NULL = (c_void_p)()
+        status = self.dll.umfpack_di_triplet_to_col (n, n, nz, Arow, Acol, Aval, Ap, Ai, Ax, NULL)
+
+        if status < 0:
+            self.dll.umfpack_di_report_status (Control, status)
+            raise RuntimeError("umfpack_di_triplet_to_col failed")
+
+    def print_matrix(self, Ap, Ai, Ax):
+        print("\nA: ")
+        n = len(Ap)-1
+        self.dll.umfpack_di_report_matrix (n, n, Ap, Ai, Ax, 1, self.Control)
+
+    def print_info(self, Info):
+        self.dll.umfpack_di_report_info (self.Control, Info)
+
+    def print_status(self, status):
+        self.dll.umfpack_di_report_status (self.Control, status)
+
+    def error_on_result(self, info, status, msg):
+        if status < 0:
+            self.print_info(info)
+            self.print_status (status)
+            raise RuntimeError("%s failed" % (msg,))
+
+    def symbolic(self, Ap, Ai, Ax, Symbolic, Info):
+        n = len(Ap)-1
+        status = self.dll.umfpack_di_symbolic (n, n, Ap, Ai, Ax, byref(Symbolic), self.Control, byref(Info))
+        self.error_on_result(Info, status, "umfpack_di_symbolic")
+        return status
+
+    def print_symbolic(self, Symbolic):
+        print("\nSymbolic factorization of A: ")
+        self.dll.umfpack_di_report_symbolic(Symbolic, self.Control)
+
+
+    def numeric(self, Ap, Ai, Ax, Symbolic, Numeric, Info):
+        status = self.dll.umfpack_di_numeric (Ap, Ai, Ax, Symbolic, byref(Numeric), self.Control, Info)
+        self.error_on_result(Info, status, "umfpack_di_numeric")
+        return status
+
+    def print_numeric(self, Numeric, Info):
+        print ("\nNumeric factorization of A: ")
+        self.dll.umfpack_di_report_numeric (Numeric, self.Control)
+
+    def solve(self, Ap, Ai, Ax, x, b, Numeric, Info):
+        status = self.dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, self.Control, Info)
+        self.error_on_result(Info, status, "umfpack_di_solve")
+        return status
+
