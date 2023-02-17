@@ -1,165 +1,23 @@
+
+import umfpack_loader as umf
 from ctypes import *
-import platform
-#import ctypes.util
 
 
-def get_dll_naming():
-    systems = {
-      'Linux' : {"prefix" : "lib", "suffix" : ".so"},
-      'Darwin' : {"prefix" : "lib", "suffix" : ".dylib"},
-      'Windows' : {"prefix" : "", "suffix" : ".dll"},
-    }
-    return systems[platform.system()]
+dll = umf.load_umfpack_dll()
+h = umf.load_blas_dll(dll)
+i = umf.load_blas_functions(dll, h)
+#print(i)
 
-def get_umfpack_name():
-    return "./%(prefix)sumfpack_lgpl%(suffix)s" % get_dll_naming()
-
-def load_umfpack_dll():
-    dll = cdll.LoadLibrary(get_umfpack_name())
-    if not dll:
-        raise RuntimeError("Cannot find UMFPACK dll")
-    return dll
-
-def get_blas_name():
-    return "%(prefix)sopenblas%(suffix)s" % get_dll_naming()
-
-def load_blas_dll(dll):
-    #print(dll.blasw_load_dll)
-    libname = c_char_p(get_blas_name().encode('utf-8'))
-    #libname = c_char_p(b'mkl_rt.2.dll')
-    msg = c_char_p()
-    dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
-    dll.blasw_load_dll.restype = c_void_p
-    h = dll.blasw_load_dll(libname, byref(msg))
-    if not h or msg:
-      if msg:
-          print(string_at(msg))
-      raise RuntimeError("NO BLAS DLL LOADED")
-    #print(h)
-    return h
-
-
-dll = load_umfpack_dll()
-load_blas_dll(dll)
-
-
-
-#dll = cdll.LoadLibrary('./umfpack.dll')
-
-#pprefix = True
-#
-#def myprintcb(msg):
-#  global pprefix
-#  if pprefix:
-#    print("DEBUG: ", end="")
-#  pmsg = msg.decode("utf-8")
-#  print(pmsg, end="")
-#  pprefix = pmsg[-1] == "\n"
 
 def myprintcb(msg):
   pmsg = msg.decode("utf-8")
   pmsg = pmsg.replace("\n", "\nUMF: ")
   print(pmsg, end="")
 
-CALLBACK = CFUNCTYPE(None, c_char_p)
-dll.blasw_set_printer_callback.argtypes = [CALLBACK]
-dll.blasw_set_printer_callback.restype = None
-dcb = CALLBACK(myprintcb)
-dll.blasw_set_printer_callback(dcb)
+# dcb handle needed
+umf.set_python_print_callback(dll)
 
 
-h = load_blas_dll(dll)
-
-
-dll.blasw_load_functions.restype = c_int
-dll.blasw_load_functions.argtypes = [c_void_p]
-i = dll.blasw_load_functions(h)
-print(i)
-
-#/* used in all UMFPACK_report_* routines: */
-UMFPACK_PRL = 0                  # /* print level */
-
-#/* used in UMFPACK_*symbolic only: */
-UMFPACK_DENSE_ROW = 1            #/* dense row parameter */
-UMFPACK_DENSE_COL = 2            #/* dense col parameter */
-UMFPACK_BLOCK_SIZE = 4           #/* BLAS-3 block size */
-UMFPACK_STRATEGY = 5             #/* auto, symmetric, unsym., or 2by2 */
-UMFPACK_2BY2_TOLERANCE = 12      #/* 2-by-2 pivot tolerance */
-UMFPACK_FIXQ = 13                #/* -1: no fixQ, 0: default, 1: fixQ */
-UMFPACK_AMD_DENSE = 14           #/* for AMD ordering */
-UMFPACK_AGGRESSIVE = 19          #/* whether or not to use aggressive
-
-#/* default values of Control may change in future versions of UMFPACK. */
-
-#/* -------------------------------------------------------------------------- */
-#/* status codes */
-#/* -------------------------------------------------------------------------- */
-#
-UMFPACK_OK = 0
-#
-#/* status > 0 means a warning, but the method was successful anyway. */
-#/* A Symbolic or Numeric object was still created. */
-##define UMFPACK_WARNING_singular_matrix (1)
-#
-#/* The following warnings were added in umfpack_*_get_determinant */
-##define UMFPACK_WARNING_determinant_underflow (2)
-##define UMFPACK_WARNING_determinant_overflow (3)
-#
-#/* status < 0 means an error, and the method was not successful. */
-#/* No Symbolic of Numeric object was created. */
-##define UMFPACK_ERROR_out_of_memory (-1)
-##define UMFPACK_ERROR_invalid_Numeric_object (-3)
-##define UMFPACK_ERROR_invalid_Symbolic_object (-4)
-##define UMFPACK_ERROR_argument_missing (-5)
-##define UMFPACK_ERROR_n_nonpositive (-6)
-##define UMFPACK_ERROR_invalid_matrix (-8)
-##define UMFPACK_ERROR_different_pattern (-11)
-##define UMFPACK_ERROR_invalid_system (-13)
-##define UMFPACK_ERROR_invalid_permutation (-15)
-##define UMFPACK_ERROR_internal_error (-911) /* yes, call me if you get this! */
-##define UMFPACK_ERROR_file_IO (-17)
-
-#/* -------------------------------------------------------------------------- */
-#/* solve codes */
-#/* -------------------------------------------------------------------------- */
-#
-#/* Solve the system ( )x=b, where ( ) is defined below.  "t" refers to the */
-#/* linear algebraic transpose (complex conjugate if A is complex), or the (') */
-#/* operator in MATLAB.  "at" refers to the array transpose, or the (.') */
-#/* operator in MATLAB. */
-#
-UMFPACK_A = (0)     # /* Ax=b    */
-UMFPACK_At = (1) #    /* A'x=b   */
-##define UMFPACK_Aat    (2)     /* A.'x=b  */
-#
-UMFPACK_Pt_L = (3)  #   /* P'Lx=b  */
-##define UMFPACK_L      (4)     /* Lx=b    */
-##define UMFPACK_Lt_P   (5)     /* L'Px=b  */
-##define UMFPACK_Lat_P  (6)     /* L.'Px=b */
-##define UMFPACK_Lt     (7)     /* L'x=b   */
-##define UMFPACK_Lat    (8)     /* L.'x=b  */
-#
-UMFPACK_U_Qt = (9) #    /* UQ'x=b  */
-##define UMFPACK_U      (10)    /* Ux=b    */
-##define UMFPACK_Q_Ut   (11)    /* QU'x=b  */
-##define UMFPACK_Q_Uat  (12)    /* QU.'x=b */
-##define UMFPACK_Ut     (13)    /* U'x=b   */
-##define UMFPACK_Uat    (14)    /* U.'x=b  */
-#
-#/* -------------------------------------------------------------------------- */
-#
-#/* Integer constants are used for status and solve codes instead of enum */
-#/* to make it easier for a Fortran code to call UMFPACK. */
-
-# /* -------------------------------------------------------------------------- */
-# /* size of Info and Control arrays */
-# /* -------------------------------------------------------------------------- */
-#
-# /* These might be larger in future versions, since there are only 3 unused
-#  * entries in Info, and no unused entries in Control. */
-
-UMFPACK_INFO = 90
-UMFPACK_CONTROL = 20
 
 
 n = 5
@@ -171,26 +29,9 @@ b = (c_double * n)(8., 45., -3., 3., 19.)
 x = (c_double * n)()
 r = (c_double * n)()
 
-#
-#
-#/* -------------------------------------------------------------------------- */
-#/* error: print a message and exit */
-#/* -------------------------------------------------------------------------- */
-#
-#static void error
-#(
-#    char *message
-#)
-#{
-#    print ("\n\n====== error: %s =====\n\n", message)
-#    exit (1)
-#}
-#
-#
 #/* -------------------------------------------------------------------------- */
 #/* resid: compute the residual, r = Ax-b or r = A'x=b and return maxnorm (r) */
 #/* -------------------------------------------------------------------------- */
-#
 def resid ( transpose, Ap, Ai, Ax):
   n = len(b)
   for i in range(n): 
@@ -211,30 +52,16 @@ def resid ( transpose, Ap, Ai, Ax):
     if abs(r[i]) > norm:
       norm = abs(r[i])
   return norm
-#
-#
-#/* -------------------------------------------------------------------------- */
-#/* main program */
-#/* -------------------------------------------------------------------------- */
-#
-#int main (int argc, char **argv)
-#{
-Info = (c_int * UMFPACK_INFO)()
-#    double Info [UMFPACK_INFO], Control [UMFPACK_CONTROL], *Ax, *Cx, *Lx, *Ux,
-#       *W, t [2], *Dx, rnorm, *Rb, *y, *Rs
-#    int *Ap, *Ai, *Cp, *Ci, row, col, p, lnz, unz, nr, nc, *Lp, *Li, *Ui, *Up,
+
+Info = (c_int * umf.UMFPACK_INFO)()
 nr = c_int()
 nc = c_int()
 n1 = c_int()
 anz = c_int()
 nfr = c_int()
-#       *P, *Q, *Lj, i, j, k, anz, nfr, nchains, *Qinit, fnpiv, lnz1, unz1, nz1,
-#       status, *Front_npivcol, *Front_parent, *Chain_start, *Wi, *Pinit, n1,
-#       *Chain_maxrows, *Chain_maxcols, *Front_1strow, *Front_leftmostdesc,
-#       nzud, do_recip
-#    void *Symbolic, *Numeric
 Symbolic = c_void_p()
 Numeric = c_void_p()
+
 #
 #    /* ---------------------------------------------------------------------- */
 #    /* initializations */
@@ -247,17 +74,16 @@ dll.umfpack_tic(byref(t))
 #           UMFPACK_MAIN_VERSION, UMFPACK_SUB_VERSION, UMFPACK_DATE)
 #
 #    /* get the default control parameters */
-UMFPACK_CONTROL = 20
-Control = (c_double * UMFPACK_CONTROL)()
+Control = (c_double * umf.UMFPACK_CONTROL)()
 dll.umfpack_di_defaults(byref(Control))
 #
 #    /* change the default print level for this demo */
 #    /* (otherwise, nothing will print) */
-Control [UMFPACK_PRL] = 6
+Control [umf.UMFPACK_PRL] = 6
 #
 #    /* print the license agreement */
-dll.umfpack_di_report_status (Control, UMFPACK_OK)
-Control [UMFPACK_PRL] = 5
+dll.umfpack_di_report_status (Control, umf.UMFPACK_OK)
+Control [umf.UMFPACK_PRL] = 5
 #
 #    /* print the control parameters */
 dll.umfpack_di_report_control(Control)
@@ -326,7 +152,7 @@ dll.umfpack_di_report_numeric (Numeric, Control)
 #    /* solve Ax=b */
 #    /* ---------------------------------------------------------------------- */
 #
-status = dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, Control, Info)
 dll.umfpack_di_report_info (Control, Info)
 dll.umfpack_di_report_status (Control, status)
 
@@ -362,12 +188,12 @@ if (status < 0):
   raise RuntimeError ("umfpack_di_scale failed")
 
 ##    /* solve Ly = P*(Rb) */
-status = dll.umfpack_di_solve (UMFPACK_Pt_L, Ap, Ai, Ax, y, Rb, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_Pt_L, Ap, Ai, Ax, y, Rb, Numeric, Control, Info)
 if (status < 0):
   raise RuntimeError ("umfpack_di_solve failed")
 
 ##    /* solve UQ'x=y */
-status = dll.umfpack_di_solve (UMFPACK_U_Qt, Ap, Ai, Ax, x, y, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_U_Qt, Ap, Ai, Ax, x, y, Numeric, Control, Info)
 if (status < 0):
   raise RuntimeError ("umfpack_di_solve failed")
 
@@ -380,7 +206,7 @@ print ("maxnorm of residual: %g\n\n" % rnorm)
 ##    /* solve A'x=b */
 ##    /* ---------------------------------------------------------------------- */
 ##
-status = dll.umfpack_di_solve (UMFPACK_At, Ap, Ai, Ax, x, b, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_At, Ap, Ai, Ax, x, b, Numeric, Control, Info)
 dll.umfpack_di_report_info (Control, Info)
 if (status < 0):
   raise RuntimeError ("umfpack_di_solve failed")
@@ -430,7 +256,7 @@ dll.umfpack_di_report_numeric (Numeric, Control)
 ##    /* solve Ax=b, with the modified A */
 ##    /* ---------------------------------------------------------------------- */
 ##
-status = dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, Control, Info)
 dll.umfpack_di_report_info (Control, Info)
 if status < 0:
   dll.umfpack_di_report_status (Control, status)
@@ -492,7 +318,7 @@ dll.umfpack_di_report_numeric (Numeric, Control)
 ##    /* solve Ax=b, with the modified A */
 ##    /* ---------------------------------------------------------------------- */
 ##
-status = dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, Control, Info)
 dll.umfpack_di_report_info (Control, Info)
 if (status < 0):
   dll.umfpack_di_report_status (Control, status)
@@ -683,7 +509,7 @@ print ("\nDone loading numeric object\n")
 ##    /* solve C'x=b */
 ##    /* ---------------------------------------------------------------------- */
 ##
-status = dll.umfpack_di_solve (UMFPACK_At, Cp, Ci, Cx, x, b, Numeric, Control, Info)
+status = dll.umfpack_di_solve (umf.UMFPACK_At, Cp, Ci, Cx, x, b, Numeric, Control, Info)
 dll.umfpack_di_report_info (Control, Info)
 if (status < 0):
   dll.umfpack_di_report_status (Control, status)
@@ -702,7 +528,7 @@ print ("\nSolving C'x=b again, using dll.umfpack_di_wsolve instead:\n")
 Wi = (c_int * n)()
 W = (c_double * (5*n))()
 
-status = dll.umfpack_di_wsolve (UMFPACK_At, Cp, Ci, Cx, x, b, Numeric, Control, Info, Wi, W)
+status = dll.umfpack_di_wsolve (umf.UMFPACK_At, Cp, Ci, Cx, x, b, Numeric, Control, Info, Wi, W)
 dll.umfpack_di_report_info (Control, Info)
 if (status < 0):
   dll.umfpack_di_report_status (Control, status)
@@ -721,3 +547,4 @@ dll.umfpack_di_free_numeric (byref(Numeric))
 ##
 dll.umfpack_toc (t)
 print ("\numfpack_di_demo complete.\nTotal time: %5.2f seconds (CPU time), %5.2f seconds (wallclock time)\n" % ( t [1], t [0]))
+
