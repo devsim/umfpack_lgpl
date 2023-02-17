@@ -240,3 +240,12 @@ class umf_control:
         self.error_on_result(Info, status, "umfpack_di_solve")
         return status
 
+    def determinant(self, x, r, Numeric, Info):
+        status = self.dll.umfpack_di_get_determinant (x, r, Numeric, Info)
+        self.error_on_result(Info, status, "umfpack_di_get_determinant")
+        return status
+
+    def print_determinant(self, x, r):
+        print("determinant: (%g" % x [0], end="")
+        print(") * 10^(%g)\n"% r [0])
+
