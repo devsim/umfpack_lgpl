@@ -101,7 +101,7 @@ umfclass.print_matrix(Ap, Ai, Ax)
 #    /* ---------------------------------------------------------------------- */
 #
 umfclass.symbolic(Ap, Ai, Ax, Symbolic, Info)
-
+#
 #
 #    /* print the symbolic factorization */
 #
@@ -139,7 +139,7 @@ print ("maxnorm of residual: %g\n\n" % rnorm)
 umfclass.determinant(x, r, Numeric, Info)
 umfclass.print_determinant(x, r)
 
-dll.umfpack_di_free_symbolic (byref(Symbolic))
-dll.umfpack_di_free_numeric (byref(Numeric))
+#dll.umfpack_di_free_symbolic (byref(Symbolic))
+#dll.umfpack_di_free_numeric (byref(Numeric))
 umfclass.toc()
 #

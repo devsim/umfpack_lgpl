@@ -153,6 +153,10 @@ class umf_control:
         self.dll = dll
         self.Control = None
 
+    def __del__(self):
+        # having a destructor is preventing segmentation fault
+        self.dll = None
+
     def tic(self):
         self.timer = (c_double * 2)()
         self.dll.umfpack_tic(byref(self.timer))
@@ -217,7 +221,7 @@ class umf_control:
 
     def symbolic(self, Ap, Ai, Ax, Symbolic, Info):
         n = len(Ap)-1
-        status = self.dll.umfpack_di_symbolic (n, n, Ap, Ai, Ax, byref(Symbolic), self.Control, byref(Info))
+        status = self.dll.umfpack_di_symbolic (n, n, Ap, Ai, Ax, byref(Symbolic), self.Control, Info)
         self.error_on_result(Info, status, "umfpack_di_symbolic")
         return status
 
@@ -227,6 +231,7 @@ class umf_control:
 
 
     def numeric(self, Ap, Ai, Ax, Symbolic, Numeric, Info):
+        self.dll.umfpack_di_free_numeric (byref(Numeric))
         status = self.dll.umfpack_di_numeric (Ap, Ai, Ax, Symbolic, byref(Numeric), self.Control, Info)
         self.error_on_result(Info, status, "umfpack_di_numeric")
         return status
