@@ -8,17 +8,8 @@ h = umf.load_blas_dll(dll)
 i = umf.load_blas_functions(dll, h)
 #print(i)
 
-
-def myprintcb(msg):
-  pmsg = msg.decode("utf-8")
-  pmsg = pmsg.replace("\n", "\nUMF: ")
-  print(pmsg, end="")
-
 # dcb handle needed
 umf.set_python_print_callback(dll)
-
-
-
 
 n = 5
 nz = 12

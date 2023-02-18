@@ -1,60 +1,12 @@
 from ctypes import *
 import platform
 #import ctypes.util
+import umfpack_loader as umf
 
+dll = umf.load_umfpack_dll()
+h = umf.load_blas_dll(dll)
+umf.load_blas_functions(dll, h)
 
-def get_dll_naming():
-    systems = {
-      'Linux' : {"prefix" : "lib", "suffix" : ".so"},
-      'Darwin' : {"prefix" : "lib", "suffix" : ".dylib"},
-      'Windows' : {"prefix" : "", "suffix" : ".dll"},
-    }
-    return systems[platform.system()]
-
-def get_umfpack_name():
-    return "./%(prefix)sumfpack_lgpl%(suffix)s" % get_dll_naming()
-
-def load_umfpack_dll():
-    dll = cdll.LoadLibrary(get_umfpack_name())
-    if not dll:
-        raise RuntimeError("Cannot find UMFPACK dll")
-    return dll
-
-def get_blas_name():
-    return "%(prefix)sopenblas%(suffix)s" % get_dll_naming()
-
-def load_blas_dll(dll):
-    #print(dll.blasw_load_dll)
-    libname = c_char_p(get_blas_name().encode('utf-8'))
-    #libname = c_char_p(b'mkl_rt.2.dll')
-    msg = c_char_p()
-    dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
-    dll.blasw_load_dll.restype = c_void_p
-    h = dll.blasw_load_dll(libname, byref(msg))
-    if not h or msg:
-      if msg:
-          print(string_at(msg))
-      raise RuntimeError("NO BLAS DLL LOADED")
-    #print(h)
-    return h
-
-
-dll = load_umfpack_dll()
-load_blas_dll(dll)
-
-
-
-#dll = cdll.LoadLibrary('./umfpack.dll')
-
-#pprefix = True
-#
-#def myprintcb(msg):
-#  global pprefix
-#  if pprefix:
-#    print("DEBUG: ", end="")
-#  pmsg = msg.decode("utf-8")
-#  print(pmsg, end="")
-#  pprefix = pmsg[-1] == "\n"
 
 def myprintcb(msg):
   pmsg = msg.decode("utf-8")
@@ -67,14 +19,6 @@ dll.blasw_set_printer_callback.restype = None
 dcb = CALLBACK(myprintcb)
 dll.blasw_set_printer_callback(dcb)
 
-
-h = load_blas_dll(dll)
-
-
-dll.blasw_load_functions.restype = c_int
-dll.blasw_load_functions.argtypes = [c_void_p]
-i = dll.blasw_load_functions(h)
-print(i)
 
 #/* used in all UMFPACK_report_* routines: */
 UMFPACK_PRL = 0                  # /* print level */

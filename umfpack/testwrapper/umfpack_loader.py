@@ -104,7 +104,10 @@ def load_umfpack_dll():
     return dll
 
 def get_blas_name():
-    return "%(prefix)sopenblas%(suffix)s" % get_dll_naming()
+    if platform.system() == "Windows":
+        return "mkl_rt.1.dll"
+    else:
+        return "%(prefix)sopenblas%(suffix)s" % get_dll_naming()
 
 def load_blas_dll(dll):
     #print(dll.blasw_load_dll)
