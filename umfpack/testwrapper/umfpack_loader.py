@@ -155,6 +155,7 @@ class umf_control:
         self.timer = None
         self.dll = dll
         self.Control = None
+        self.Info = None
 
     def __del__(self):
         # having a destructor is preventing segmentation fault
@@ -171,6 +172,8 @@ class umf_control:
     def set_defaults(self):
         self.Control = (c_double * UMFPACK_CONTROL)()
         self.dll.umfpack_di_defaults(byref(self.Control))
+        self.Info = (c_int * UMFPACK_INFO)()
+
     def init_verbose(self):
         #    /* change the default print level for this demo */
         #    /* (otherwise, nothing will print) */
@@ -185,7 +188,9 @@ class umf_control:
     def print_vector(self, b, label):
         #    /* print the right-hand-side */
         print ("\n%s: " % (label,), flush=True, end="")
-        self.dll.umfpack_di_report_vector (len(b), b, self.Control)
+        self.dll.umfpack_di_report_vector.argtypes = [c_int, c_void_p, c_void_p]
+        self.dll.umfpack_di_report_vector.restype = None
+        self.dll.umfpack_di_report_vector (len(b), b.buffer_info()[0], self.Control)
 
     def print_triplet(self, Arow, Acol, Aval):
         print ("\nA: ")
@@ -193,16 +198,27 @@ class umf_control:
         nz = len(Arow)
         #print(n)
         #print(nz)
-        self.dll.umfpack_di_report_triplet(n, n, nz, Arow, Acol, Aval, self.Control)
+        Ar = c_void_p(Arow.buffer_info()[0])
+        Ac = c_void_p(Acol.buffer_info()[0])
+        Av = c_void_p(Aval.buffer_info()[0])
+        self.dll.umfpack_di_report_triplet(n, n, nz, Ar, Ac, Av, self.Control)
 
-    def triplet_to_col(self, Arow, Acol, Aval, Ap, Ai, Ax):
+    def triplet_to_col(self, Arow, Acol, Aval):
         n = max(Arow) + 1
         nz = len(Arow)
         NULL = (c_void_p)()
-        status = self.dll.umfpack_di_triplet_to_col (n, n, nz, Arow, Acol, Aval, Ap, Ai, Ax, NULL)
+        nz1 = max(nz,1) #; /* ensure arrays are not of size zero. */
+        Ap = (c_int * (n+1))()
+        Ai = (c_int * (nz1))()
+        Ax = (c_double * (nz1))()
+        Ar = c_void_p(Arow.buffer_info()[0])
+        Ac = c_void_p(Acol.buffer_info()[0])
+        Av = c_void_p(Aval.buffer_info()[0])
+        self.status = self.dll.umfpack_di_triplet_to_col (n, n, nz, Ar, Ac, Av, Ap, Ai, Ax, NULL)
+        return Ap, Ai, Ax
 
-        if status < 0:
-            self.dll.umfpack_di_report_status (Control, status)
+        if self.status < 0:
+            self.dll.umfpack_di_report_status (self.Control, self.status)
             raise RuntimeError("umfpack_di_triplet_to_col failed")
 
     def print_matrix(self, Ap, Ai, Ax):
@@ -210,47 +226,55 @@ class umf_control:
         n = len(Ap)-1
         self.dll.umfpack_di_report_matrix (n, n, Ap, Ai, Ax, 1, self.Control)
 
-    def print_info(self, Info):
-        self.dll.umfpack_di_report_info (self.Control, Info)
+    def print_info(self):
+        self.dll.umfpack_di_report_info (self.Control, self.Info)
 
-    def print_status(self, status):
-        self.dll.umfpack_di_report_status (self.Control, status)
+    def print_status(self):
+        self.dll.umfpack_di_report_status (self.Control, self.status)
 
-    def error_on_result(self, info, status, msg):
+    def error_on_result(self, status, msg):
         if status < 0:
-            self.print_info(info)
+            self.print_info(self.Info)
             self.print_status (status)
             raise RuntimeError("%s failed" % (msg,))
 
-    def symbolic(self, Ap, Ai, Ax, Symbolic, Info):
+    def symbolic(self, Ap, Ai, Ax):
         n = len(Ap)-1
-        status = self.dll.umfpack_di_symbolic (n, n, Ap, Ai, Ax, byref(Symbolic), self.Control, Info)
-        self.error_on_result(Info, status, "umfpack_di_symbolic")
-        return status
+        Symbolic = c_void_p()
+        status = self.dll.umfpack_di_symbolic (n, n, Ap, Ai, Ax, byref(Symbolic), self.Control, self.Info)
+        self.error_on_result(status, "umfpack_di_symbolic")
+        return Symbolic
 
     def print_symbolic(self, Symbolic):
         print("\nSymbolic factorization of A: ")
         self.dll.umfpack_di_report_symbolic(Symbolic, self.Control)
 
 
-    def numeric(self, Ap, Ai, Ax, Symbolic, Numeric, Info):
+    def numeric(self, Ap, Ai, Ax, Symbolic):
+        Numeric = c_void_p()
         self.dll.umfpack_di_free_numeric (byref(Numeric))
-        status = self.dll.umfpack_di_numeric (Ap, Ai, Ax, Symbolic, byref(Numeric), self.Control, Info)
-        self.error_on_result(Info, status, "umfpack_di_numeric")
-        return status
+        status = self.dll.umfpack_di_numeric (Ap, Ai, Ax, Symbolic, byref(Numeric), self.Control, self.Info)
+        self.error_on_result(status, "umfpack_di_numeric")
+        return Numeric
 
-    def print_numeric(self, Numeric, Info):
+    def print_numeric(self, Numeric):
         print ("\nNumeric factorization of A: ")
         self.dll.umfpack_di_report_numeric (Numeric, self.Control)
 
-    def solve(self, Ap, Ai, Ax, x, b, Numeric, Info):
-        status = self.dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, self.Control, Info)
-        self.error_on_result(Info, status, "umfpack_di_solve")
-        return status
+    def solve(self, Ap, Ai, Ax, x, b, Numeric):
+        X = c_void_p(x.buffer_info()[0])
+        B = c_void_p(b.buffer_info()[0])
+        print(x)
+        status = self.dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, X, B, Numeric, self.Control, self.Info)
+        print(x)
+        self.error_on_result(status, "umfpack_di_solve")
+        return b
 
-    def determinant(self, x, r, Numeric, Info):
-        status = self.dll.umfpack_di_get_determinant (x, r, Numeric, Info)
-        self.error_on_result(Info, status, "umfpack_di_get_determinant")
+    def determinant(self, x, r, Numeric):
+        X = c_void_p(x.buffer_info()[0])
+        R = c_void_p(r.buffer_info()[0])
+        status = self.dll.umfpack_di_get_determinant (X, R, Numeric, self.Info)
+        self.error_on_result(status, "umfpack_di_get_determinant")
         return status
 
     def print_determinant(self, x, r):

@@ -1,6 +1,6 @@
 
 import umfpack_loader as umf
-from ctypes import *
+import array
 
 
 dll = umf.load_umfpack_dll()
@@ -13,12 +13,12 @@ umf.set_python_print_callback(dll)
 
 n = 5
 nz = 12
-Arow = (c_int * nz)(0,  4,  1,  1,   2,   2,  0,  1,  2,  3,  4,  4)
-Acol = (c_int * nz)(0,  4,  0,  2,   1,   2,  1,  4,  3,  2,  1,  2)
-Aval = (c_double * nz)(2., 1., 3., 4., -1., -3., 3., 6., 2., 1., 4., 2.)
-b = (c_double * n)(8., 45., -3., 3., 19.)
-x = (c_double * n)()
-r = (c_double * n)()
+Arow = array.array('i', (0,  4,  1,  1,   2,   2,  0,  1,  2,  3,  4,  4))
+Acol = array.array('i', (0,  4,  0,  2,   1,   2,  1,  4,  3,  2,  1,  2))
+Aval = array.array('d', (2., 1., 3., 4., -1., -3., 3., 6., 2., 1., 4., 2.))
+b = array.array('d', (8., 45., -3., 3., 19.))
+x = array.array('d', [0.0]*n)
+r = array.array('d', [0.0]*n)
 
 #/* -------------------------------------------------------------------------- */
 #/* resid: compute the residual, r = Ax-b or r = A'x=b and return maxnorm (r) */
@@ -44,14 +44,6 @@ def resid ( transpose, Ap, Ai, Ax):
       norm = abs(r[i])
   return norm
 
-Info = (c_int * umf.UMFPACK_INFO)()
-nr = c_int()
-nc = c_int()
-n1 = c_int()
-anz = c_int()
-nfr = c_int()
-Symbolic = c_void_p()
-Numeric = c_void_p()
 
 #
 #    /* ---------------------------------------------------------------------- */
@@ -78,11 +70,7 @@ print ("\nA: ")
 umfclass.print_triplet(Arow, Acol, Aval)
 
 #    /* convert to column form */
-nz1 = max(nz,1) #; /* ensure arrays are not of size zero. */
-Ap = (c_int * (n+1))()
-Ai = (c_int * (nz1))()
-Ax = (c_double * (nz1))()
-umfclass.triplet_to_col(Arow, Acol, Aval, Ap, Ai, Ax)
+[Ap, Ai, Ax] = umfclass.triplet_to_col(Arow, Acol, Aval)
 
 #    /* print the column-form of A */
 umfclass.print_matrix(Ap, Ai, Ax)
@@ -91,7 +79,7 @@ umfclass.print_matrix(Ap, Ai, Ax)
 #    /* symbolic factorization */
 #    /* ---------------------------------------------------------------------- */
 #
-umfclass.symbolic(Ap, Ai, Ax, Symbolic, Info)
+Symbolic = umfclass.symbolic(Ap, Ai, Ax)
 #
 #
 #    /* print the symbolic factorization */
@@ -103,20 +91,20 @@ umfclass.print_symbolic(Symbolic)
 #    /* numeric factorization */
 #    /* ---------------------------------------------------------------------- */
 #
-umfclass.numeric(Ap, Ai, Ax, Symbolic, Numeric, Info)
+Numeric = umfclass.numeric(Ap, Ai, Ax, Symbolic)
 
 
 #    /* print the numeric factorization */
-umfclass.print_numeric(Numeric, Info)
+umfclass.print_numeric(Numeric)
 
 #
 #    /* ---------------------------------------------------------------------- */
 #    /* solve Ax=b */
 #    /* ---------------------------------------------------------------------- */
 #
-status = umfclass.solve(Ap, Ai, Ax, x, b, Numeric, Info)
-umfclass.print_info(Info)
-umfclass.print_status(status)
+status = umfclass.solve(Ap, Ai, Ax, x, b, Numeric)
+umfclass.print_info()
+umfclass.print_status()
 
 print("\nx (solution of Ax=b): ")
 umfclass.print_vector(x, 'x')
@@ -127,7 +115,7 @@ print ("maxnorm of residual: %g\n\n" % rnorm)
 #   /* compute the determinant */
 #   /* ---------------------------------------------------------------------- */
 
-umfclass.determinant(x, r, Numeric, Info)
+umfclass.determinant(x, r, Numeric)
 umfclass.print_determinant(x, r)
 
 #dll.umfpack_di_free_symbolic (byref(Symbolic))
