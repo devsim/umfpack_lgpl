@@ -1,5 +1,6 @@
 from ctypes import *
 import platform
+import array
 
 #/* used in all UMFPACK_report_* routines: */
 UMFPACK_PRL = 0                  # /* print level */
@@ -208,13 +209,16 @@ class umf_control:
         nz = len(Arow)
         NULL = (c_void_p)()
         nz1 = max(nz,1) #; /* ensure arrays are not of size zero. */
-        Ap = (c_int * (n+1))()
-        Ai = (c_int * (nz1))()
-        Ax = (c_double * (nz1))()
+        Ap = array.array('i', [0] * (n+1))
+        Ai = array.array('i', [0] * (nz1))
+        Ax = array.array('d', [0] * (nz1))
         Ar = c_void_p(Arow.buffer_info()[0])
         Ac = c_void_p(Acol.buffer_info()[0])
         Av = c_void_p(Aval.buffer_info()[0])
-        self.status = self.dll.umfpack_di_triplet_to_col (n, n, nz, Ar, Ac, Av, Ap, Ai, Ax, NULL)
+        AP = c_void_p(Ap.buffer_info()[0])
+        AI = c_void_p(Ai.buffer_info()[0])
+        AX = c_void_p(Ax.buffer_info()[0])
+        self.status = self.dll.umfpack_di_triplet_to_col (n, n, nz, Ar, Ac, Av, AP, AI, AX, NULL)
         return Ap, Ai, Ax
 
         if self.status < 0:
@@ -224,7 +228,10 @@ class umf_control:
     def print_matrix(self, Ap, Ai, Ax):
         print("\nA: ")
         n = len(Ap)-1
-        self.dll.umfpack_di_report_matrix (n, n, Ap, Ai, Ax, 1, self.Control)
+        AP = c_void_p(Ap.buffer_info()[0])
+        AI = c_void_p(Ai.buffer_info()[0])
+        AX = c_void_p(Ax.buffer_info()[0])
+        self.dll.umfpack_di_report_matrix (n, n, AP, AI, AX, 1, self.Control)
 
     def print_info(self):
         self.dll.umfpack_di_report_info (self.Control, self.Info)
@@ -241,7 +248,10 @@ class umf_control:
     def symbolic(self, Ap, Ai, Ax):
         n = len(Ap)-1
         Symbolic = c_void_p()
-        status = self.dll.umfpack_di_symbolic (n, n, Ap, Ai, Ax, byref(Symbolic), self.Control, self.Info)
+        AP = c_void_p(Ap.buffer_info()[0])
+        AI = c_void_p(Ai.buffer_info()[0])
+        AX = c_void_p(Ax.buffer_info()[0])
+        status = self.dll.umfpack_di_symbolic (n, n, AP, AI, AX, byref(Symbolic), self.Control, self.Info)
         self.error_on_result(status, "umfpack_di_symbolic")
         return Symbolic
 
@@ -253,7 +263,10 @@ class umf_control:
     def numeric(self, Ap, Ai, Ax, Symbolic):
         Numeric = c_void_p()
         self.dll.umfpack_di_free_numeric (byref(Numeric))
-        status = self.dll.umfpack_di_numeric (Ap, Ai, Ax, Symbolic, byref(Numeric), self.Control, self.Info)
+        AP = c_void_p(Ap.buffer_info()[0])
+        AI = c_void_p(Ai.buffer_info()[0])
+        AX = c_void_p(Ax.buffer_info()[0])
+        status = self.dll.umfpack_di_numeric (AP, AI, AX, Symbolic, byref(Numeric), self.Control, self.Info)
         self.error_on_result(status, "umfpack_di_numeric")
         return Numeric
 
@@ -264,9 +277,10 @@ class umf_control:
     def solve(self, Ap, Ai, Ax, x, b, Numeric):
         X = c_void_p(x.buffer_info()[0])
         B = c_void_p(b.buffer_info()[0])
-        print(x)
-        status = self.dll.umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, X, B, Numeric, self.Control, self.Info)
-        print(x)
+        AP = c_void_p(Ap.buffer_info()[0])
+        AI = c_void_p(Ai.buffer_info()[0])
+        AX = c_void_p(Ax.buffer_info()[0])
+        status = self.dll.umfpack_di_solve (UMFPACK_A, AP, AI, AX, X, B, Numeric, self.Control, self.Info)
         self.error_on_result(status, "umfpack_di_solve")
         return b
 
