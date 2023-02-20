@@ -146,7 +146,6 @@ def load_blas_dll(dll, blaslib = None, noexcept = False):
 def load_blas_functions(dll, h):
     dll.blasw_load_functions.restype = c_int
     dll.blasw_load_functions.argtypes = [c_void_p]
-    #dll.blasw_load_functions.argtypes = [c_void_p]
     i = dll.blasw_load_functions(h._handle)
     return i
 
@@ -201,7 +200,8 @@ class di_numeric:
         self.umf_control = uc
 
     def __del__(self):
-        dll.umfpack_di_free_numeric (byref(self.Numeric))
+        #dll.umfpack_di_free_numeric (byref(self.Numeric))
+        pass
 
     def factor_numeric(self, matrix, Symbolic):
         if self.umf_control.is_complex:
