@@ -1,26 +1,26 @@
 
 import umfpack_loader as umf
 
-
-
 def init(**kwargs):
     '''
     initializations and returns class
     '''
-    umf.dll = umf.load_umfpack_dll()
+    gdata = umf.global_data()
+    gdata.dll = umf.load_umfpack_dll()
     blas_dll = kwargs["blas"]
     if isinstance(blas_dll, str):
         blas_dll = (blas_dll,)
     mcount = -1
     for b in blas_dll:
-        h = umf.load_blas_dll(umf.dll, blaslib=b, noexcept=True)
+        h = umf.load_blas_dll(gdata, blaslib=b, noexcept=True)
         if h:
-            mcount = umf.load_blas_functions(umf.dll, h)
+            mcount = umf.load_blas_functions(gdata, h)
             if mcount == 0:
                 break
     if mcount != 0:
         raise RuntimeError('Missing %d math functions' % mcount)
-    return umf.umf_control(umf.dll, kwargs['matrix_type'])
+    uc = umf.umf_control(gdata, kwargs['matrix_type'])
+    return uc
 
 def matrix(**kwargs):
     if kwargs["matrix_format"] != "csc":

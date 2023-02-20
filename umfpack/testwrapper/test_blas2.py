@@ -3,13 +3,15 @@ import umfpack_loader as umf
 import array
 
 
+gdata = umf.global_data()
 dll = umf.load_umfpack_dll()
-h = umf.load_blas_dll(dll)
-i = umf.load_blas_functions(dll, h)
+gdata.dll = dll
+h = umf.load_blas_dll(gdata)
+i = umf.load_blas_functions(gdata, h)
 #print(i)
 
 # dcb handle needed
-umf.set_python_print_callback(dll)
+umf.set_python_print_callback(gdata)
 
 n = 5
 nz = 12
@@ -25,7 +27,7 @@ r = array.array('d', [0.0]*n)
 #    /* initializations */
 #    /* ---------------------------------------------------------------------- */
 #
-umfclass = umf.umf_control(dll, matrix_type='real')
+umfclass = umf.umf_control(gdata, matrix_type='real')
 umfclass.tic()
 
 umfclass.set_defaults()

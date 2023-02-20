@@ -4,9 +4,10 @@ import platform
 import umfpack_loader as umf
 
 dll = umf.load_umfpack_dll()
-h = umf.load_blas_dll(dll)
-umf.load_blas_functions(dll, h)
-
+gdata = umf.global_data()
+gdata.dll = dll
+h = umf.load_blas_dll(gdata)
+umf.load_blas_functions(gdata, h)
 
 def myprintcb(msg):
   pmsg = msg.decode("utf-8")
