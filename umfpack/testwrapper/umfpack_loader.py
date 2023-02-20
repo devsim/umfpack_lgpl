@@ -126,12 +126,16 @@ def load_blas_dll(dll, blaslib = None, noexcept = False):
     libname = c_char_p(dllname.encode('utf-8'))
     #libname = c_char_p(b'mkl_rt.2.dll')
     msg = c_char_p()
-    dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
-    dll.blasw_load_dll.restype = c_void_p
-    h = dll.blasw_load_dll(libname, byref(msg))
+    #dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
+    #dll.blasw_load_dll.restype = c_void_p
+    #h = dll.blasw_load_dll(libname, byref(msg))
+    h = cdll.LoadLibrary(dllname)
+    #if not h or msg:
+    #    if msg:
+    #        print(string_at(msg))
+    #    if not noexcept:
+    #        raise RuntimeError("NO BLAS DLL LOADED")
     if not h or msg:
-        if msg:
-            print(string_at(msg))
         if not noexcept:
             raise RuntimeError("NO BLAS DLL LOADED")
     else:
@@ -142,7 +146,8 @@ def load_blas_dll(dll, blaslib = None, noexcept = False):
 def load_blas_functions(dll, h):
     dll.blasw_load_functions.restype = c_int
     dll.blasw_load_functions.argtypes = [c_void_p]
-    i = dll.blasw_load_functions(h)
+    #dll.blasw_load_functions.argtypes = [c_void_p]
+    i = dll.blasw_load_functions(h._handle)
     return i
 
 def myprintcb(msg):
