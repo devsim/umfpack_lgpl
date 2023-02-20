@@ -1,15 +1,10 @@
 
-import umfpack_loader as umf
 import array
+import dswrapper
+import umfpack_loader as umf
 
 
-dll = umf.load_umfpack_dll()
-h = umf.load_blas_dll(dll)
-i = umf.load_blas_functions(dll, h)
-#print(i)
-
-# dcb handle needed
-umf.set_python_print_callback(dll)
+umfclass = dswrapper.solver(action="init", blas=umf.get_blas_name())
 
 n = 5
 nz = 12
@@ -19,14 +14,6 @@ Aval = array.array('d', (2., 1., 3., 4., -1., -3., 3., 6., 2., 1., 4., 2.))
 b = array.array('d', (8., 45., -3., 3., 19.))
 x = array.array('d', [0.0]*n)
 r = array.array('d', [0.0]*n)
-
-#
-#    /* ---------------------------------------------------------------------- */
-#    /* initializations */
-#    /* ---------------------------------------------------------------------- */
-#
-umfclass = umf.di_umf_control(dll)
-umfclass.tic()
 
 umfclass.set_defaults()
 umfclass.init_verbose()
@@ -47,37 +34,37 @@ umfclass.print_triplet(triplet_matrix)
 #    /* convert to column form */
 matrix = umfclass.triplet_to_col(triplet_matrix)
 
+matrix = dswrapper.solver(action="matrix", math_object=umfclass, matrix_format="csc", Ap=matrix.Ap, Ai=matrix.Ai, Ax=matrix.Ax)
+
 #    /* print the column-form of A */
 umfclass.print_matrix(matrix)
 
 #    /* ---------------------------------------------------------------------- */
 #    /* symbolic factorization */
 #    /* ---------------------------------------------------------------------- */
-#
-Symbolic = umfclass.symbolic(matrix)
-#
-#
+
+Symbolic = dswrapper.solver(action="symbolic", math_object=umfclass, matrix=matrix)
+
 #    /* print the symbolic factorization */
-#
+
 umfclass.print_symbolic(Symbolic)
 
-#
+
 #    /* ---------------------------------------------------------------------- */
 #    /* numeric factorization */
 #    /* ---------------------------------------------------------------------- */
-#
-Numeric = umfclass.numeric(matrix, Symbolic)
 
+Numeric = dswrapper.solver(action="numeric", math_object=umfclass, matrix=matrix, symbolic=Symbolic)
 
 #    /* print the numeric factorization */
 umfclass.print_numeric(Numeric)
 
-#
+
 #    /* ---------------------------------------------------------------------- */
 #    /* solve Ax=b */
 #    /* ---------------------------------------------------------------------- */
-#
-status = umfclass.solve(matrix, x, b, Numeric, False)
+
+dswrapper.solver(action="solve", math_object=umfclass, matrix=matrix, numeric=Numeric, b=b, x=x, transpose=False)
 umfclass.print_info()
 umfclass.print_status()
 
@@ -85,13 +72,4 @@ print("\nx (solution of Ax=b): ")
 umfclass.print_vector(x, 'x')
 rnorm = umf.resid(transpose=False, matrix=matrix, x=x, r=r, b=b)
 print ("maxnorm of residual: %g\n\n" % rnorm)
-
-#   /* ---------------------------------------------------------------------- */
-#   /* compute the determinant */
-#   /* ---------------------------------------------------------------------- */
-
-umfclass.determinant(x, r, Numeric)
-umfclass.print_determinant(x, r)
-
-umfclass.toc()
 

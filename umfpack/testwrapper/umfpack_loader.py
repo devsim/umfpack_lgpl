@@ -116,18 +116,26 @@ def get_blas_name():
     else:
         return "%(prefix)sopenblas%(suffix)s" % get_dll_naming()
 
-def load_blas_dll(dll):
+def load_blas_dll(dll, blaslib = None, noexcept = False):
     #print(dll.blasw_load_dll)
-    libname = c_char_p(get_blas_name().encode('utf-8'))
+    global blaslibs
+    if blaslib:
+        dllname = blaslib
+    else:
+        dllname = get_blas_name()
+    libname = c_char_p(dllname.encode('utf-8'))
     #libname = c_char_p(b'mkl_rt.2.dll')
     msg = c_char_p()
     dll.blasw_load_dll.argtypes = [c_char_p, c_void_p]
     dll.blasw_load_dll.restype = c_void_p
     h = dll.blasw_load_dll(libname, byref(msg))
     if not h or msg:
-      if msg:
-          print(string_at(msg))
-      raise RuntimeError("NO BLAS DLL LOADED")
+        if msg:
+            print(string_at(msg))
+        if not noexcept:
+            raise RuntimeError("NO BLAS DLL LOADED")
+    else:
+        blaslibs.append((dllname, h))
     #print(h)
     return h
 
@@ -158,6 +166,7 @@ def get_info():
     return (c_int * uml.UMFPACK_INFO)();
 
 dll = None
+blaslibs = []
 
 
 class di_symbolic:
@@ -170,8 +179,8 @@ class di_symbolic:
 
     def factor_symbolic(self, matrix):
         dll.umfpack_di_free_symbolic (byref(self.Symbolic))
-        status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), self.umf_control.Control, self.umf_control.Info)
-        return status
+        self.status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), self.umf_control.Control, self.umf_control.Info)
+        return self.status
 
 class di_numeric:
     def __init__(self, uc):
@@ -183,20 +192,20 @@ class di_numeric:
 
     def factor_numeric(self, matrix, Symbolic):
         dll.umfpack_di_free_numeric (byref(self.Numeric))
-        status = dll.umfpack_di_numeric (matrix.AP, matrix.AI, matrix.AX, Symbolic.Symbolic, byref(self.Numeric), self.umf_control.Control, self.umf_control.Info)
-        return status
+        self.status = dll.umfpack_di_numeric (matrix.AP, matrix.AI, matrix.AX, Symbolic.Symbolic, byref(self.Numeric), self.umf_control.Control, self.umf_control.Info)
+        return self.status
 
     def solve(self, matrix, x, b, transpose):
         X = c_void_p(x.buffer_info()[0])
         B = c_void_p(b.buffer_info()[0])
         status = dll.umfpack_di_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, X, B, self.Numeric, self.umf_control.Control, self.umf_control.Info)
-        return status
+        return self.status
 
     def determinant(self, x, r):
         X = c_void_p(x.buffer_info()[0])
         R = c_void_p(r.buffer_info()[0])
         status = dll.umfpack_di_get_determinant (X, R, self.Numeric, self.umf_control.Info)
-        return status
+        return self.status
 
 class di_triplet:
     def __init__(self, uc, Arow, Acol, Aval):
@@ -227,13 +236,16 @@ class di_matrix:
     def __del__(self):
         pass
 
-class umf_control:
+class di_umf_control:
     def __init__(self, dllp):
         global dll
         self.timer = None
         dll = dllp
         self.Control = None
         self.Info = None
+        # expected attributes
+        self.matrix_format = "csc"
+        self.matrix_type = "real"
 
     def __del__(self):
         # having a destructor is preventing segmentation fault
@@ -311,8 +323,8 @@ class umf_control:
 
     def symbolic(self, matrix):
         Symbolic = di_symbolic(self)
-        status = Symbolic.factor_symbolic(matrix)
-        self.error_on_result(status, "umfpack_di_symbolic")
+        self.status = Symbolic.factor_symbolic(matrix)
+        self.error_on_result(self.status, "umfpack_di_symbolic")
         return Symbolic
 
     def print_symbolic(self, Symbolic):
@@ -322,8 +334,8 @@ class umf_control:
 
     def numeric(self, matrix, Symbolic):
         Numeric = di_numeric(self)
-        status = Numeric.factor_numeric(matrix, Symbolic)
-        self.error_on_result(status, "umfpack_di_numeric")
+        self.status = Numeric.factor_numeric(matrix, Symbolic)
+        self.error_on_result(self.status, "umfpack_di_numeric")
         return Numeric
 
     def print_numeric(self, Numeric):
@@ -331,18 +343,18 @@ class umf_control:
         dll.umfpack_di_report_numeric (Numeric.Numeric, self.Control)
 
     def solve(self, matrix, x, b, Numeric, transpose):
-        status = Numeric.solve(matrix, x, b, transpose)
-        self.error_on_result(status, "umfpack_di_solve")
-        return b
+        self.status = Numeric.solve(matrix, x, b, transpose)
+        self.error_on_result(self.status, "umfpack_di_solve")
 
     def determinant(self, x, r, Numeric):
-        status = Numeric.determinant(x, r)
-        self.error_on_result(status, "umfpack_di_get_determinant")
-        return status
+        self.status = Numeric.determinant(x, r)
+        self.error_on_result(self.status, "umfpack_di_get_determinant")
+        return self.status
 
     def print_determinant(self, x, r):
         print("determinant: (%g" % x [0], end="")
         print(") * 10^(%g)\n"% r [0])
+
 
 #/* -------------------------------------------------------------------------- */
 #/* resid: compute the residual, r = Ax-b or r = A'x=b and return maxnorm (r) */

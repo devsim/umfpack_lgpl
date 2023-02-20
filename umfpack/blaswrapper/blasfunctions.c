@@ -156,16 +156,22 @@ int blasw_load_functions(void *dll_p)
   struct symtable *tbl = math_function_table;
   while (tbl->symbol_name)
   {
-#ifdef _WIN32
-    void *h = (void *) GetProcAddress(dll_p, tbl->symbol_name);
-#else
-    void *h = dlsym(dll_p, tbl->symbol_name);
-#endif
-    if (h == NULL)
+    if (*(tbl->function_pointer) == NULL)
     {
-      ++missing_count;
+#ifdef _WIN32
+      void *h = (void *) GetProcAddress(dll_p, tbl->symbol_name);
+#else
+      void *h = dlsym(dll_p, tbl->symbol_name);
+#endif
+      if (h != NULL)
+      {
+        *(tbl->function_pointer) = h;
+      }
+      else
+      {
+        ++missing_count;
+      }
     }
-    *(tbl->function_pointer) = h;
     ++tbl;
   }
   return missing_count;
