@@ -83,7 +83,7 @@ umfclass.print_status()
 
 print("\nx (solution of Ax=b): ")
 umfclass.print_vector(x, 'x')
-rnorm = umf.resid(transpose=False, matrix=matrix, x=x, r=r, b=b)
+rnorm = umf.resid(transpose=False, is_complex=False, matrix=matrix, x=x, r=r, b=b)
 print ("maxnorm of residual: %g\n\n" % rnorm)
 
 #   /* ---------------------------------------------------------------------- */
