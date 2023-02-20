@@ -77,7 +77,7 @@ umfclass.print_numeric(Numeric)
 #    /* solve Ax=b */
 #    /* ---------------------------------------------------------------------- */
 #
-status = umfclass.solve(matrix, x, b, Numeric)
+status = umfclass.solve(matrix, x, b, Numeric, False)
 umfclass.print_info()
 umfclass.print_status()
 

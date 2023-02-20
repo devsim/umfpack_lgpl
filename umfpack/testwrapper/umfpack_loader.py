@@ -87,6 +87,12 @@ UMFPACK_U_Qt = (9) #    /* UQ'x=b  */
 UMFPACK_INFO = 90
 UMFPACK_CONTROL = 20
 
+def get_transpose(x):
+    if x:
+        return UMFPACK_At
+    else:
+        return UMFPACK_A
+
 def get_dll_naming():
     systems = {
       'Linux' : {"prefix" : "lib", "suffix" : ".so"},
@@ -302,10 +308,10 @@ class umf_control:
         print ("\nNumeric factorization of A: ")
         dll.umfpack_di_report_numeric (Numeric.Numeric, self.Control)
 
-    def solve(self, matrix, x, b, Numeric):
+    def solve(self, matrix, x, b, Numeric, transpose):
         X = c_void_p(x.buffer_info()[0])
         B = c_void_p(b.buffer_info()[0])
-        status = dll.umfpack_di_solve (UMFPACK_A, matrix.AP, matrix.AI, matrix.AX, X, B, Numeric.Numeric, self.Control, self.Info)
+        status = dll.umfpack_di_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, X, B, Numeric.Numeric, self.Control, self.Info)
         self.error_on_result(status, "umfpack_di_solve")
         return b
 
