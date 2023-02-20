@@ -168,6 +168,11 @@ class di_symbolic:
     def __del__(self):
         dll.umfpack_di_free_symbolic (byref(self.Symbolic))
 
+    def factor_symbolic(self, matrix):
+        dll.umfpack_di_free_symbolic (byref(self.Symbolic))
+        status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), umf_control.Control, umf_control.Info)
+        return status
+
 class di_numeric:
     def __init__(self, uc):
         self.Numeric = c_void_p()
@@ -289,7 +294,7 @@ class umf_control:
 
     def symbolic(self, matrix):
         Symbolic = di_symbolic(self)
-        status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(Symbolic.Symbolic), self.Control, self.Info)
+        status = factor_symbolic (matrix)
         self.error_on_result(status, "umfpack_di_symbolic")
         return Symbolic
 
