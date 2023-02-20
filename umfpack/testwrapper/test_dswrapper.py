@@ -4,16 +4,26 @@ import dswrapper
 import umfpack_loader as umf
 
 
-umfclass = dswrapper.solver(action="init", blas=umf.get_blas_name())
+is_complex = False
+if is_complex:
+    umfclass = dswrapper.solver(action="init", blas=umf.get_blas_name(), matrix_type='complex')
+else:
+    umfclass = dswrapper.solver(action="init", blas=umf.get_blas_name(), matrix_type='real')
 
 n = 5
 nz = 12
 Arow = array.array('i', (0,  4,  1,  1,   2,   2,  0,  1,  2,  3,  4,  4))
 Acol = array.array('i', (0,  4,  0,  2,   1,   2,  1,  4,  3,  2,  1,  2))
-Aval = array.array('d', (2., 1., 3., 4., -1., -3., 3., 6., 2., 1., 4., 2.))
-b = array.array('d', (8., 45., -3., 3., 19.))
-x = array.array('d', [0.0]*n)
-r = array.array('d', [0.0]*n)
+if is_complex:
+    Aval = array.array('d', (2., 0., 1., 0., 3., 0., 4., 0., -1., 0., -3., 0., 3., 0., 6., 0., 2., 0., 1., 0., 4., 0., 2., 0.))
+    b = array.array('d', (8., 0., 45., 0., -3., 0., 3., 0., 19., 0.))
+    x = array.array('d', [0.0]*2*n)
+    r = array.array('d', [0.0]*2*n)
+else:
+    Aval = array.array('d', (2., 1., 3., 4., -1., -3., 3., 6., 2., 1., 4., 2.))
+    b = array.array('d', (8., 45., -3., 3., 19.))
+    x = array.array('d', [0.0]*n)
+    r = array.array('d', [0.0]*n)
 
 umfclass.set_defaults()
 umfclass.init_verbose()
@@ -70,6 +80,6 @@ umfclass.print_status()
 
 print("\nx (solution of Ax=b): ")
 umfclass.print_vector(x, 'x')
-rnorm = umf.resid(transpose=False, matrix=matrix, x=x, r=r, b=b)
+rnorm = umf.resid(transpose=False, is_complex=is_complex, matrix=matrix, x=x, r=r, b=b)
 print ("maxnorm of residual: %g\n\n" % rnorm)
 

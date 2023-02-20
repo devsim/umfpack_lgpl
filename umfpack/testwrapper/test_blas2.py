@@ -25,7 +25,7 @@ r = array.array('d', [0.0]*n)
 #    /* initializations */
 #    /* ---------------------------------------------------------------------- */
 #
-umfclass = umf.di_umf_control(dll)
+umfclass = umf.umf_control(dll, matrix_type='real')
 umfclass.tic()
 
 umfclass.set_defaults()

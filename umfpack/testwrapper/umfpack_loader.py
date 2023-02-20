@@ -175,11 +175,19 @@ class di_symbolic:
         self.umf_control = uc
 
     def __del__(self):
-        dll.umfpack_di_free_symbolic (byref(self.Symbolic))
+        if self.umf_control.is_complex:
+            dll.umfpack_zi_free_symbolic (byref(self.Symbolic))
+        else:
+            dll.umfpack_di_free_symbolic (byref(self.Symbolic))
 
     def factor_symbolic(self, matrix):
-        dll.umfpack_di_free_symbolic (byref(self.Symbolic))
-        self.status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), self.umf_control.Control, self.umf_control.Info)
+        if self.umf_control.is_complex:
+            dll.umfpack_zi_free_symbolic (byref(self.Symbolic))
+            NULL = c_void_p()
+            self.status = dll.umfpack_zi_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, NULL, byref(self.Symbolic), self.umf_control.Control, self.umf_control.Info)
+        else:
+            dll.umfpack_di_free_symbolic (byref(self.Symbolic))
+            self.status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), self.umf_control.Control, self.umf_control.Info)
         return self.status
 
 class di_numeric:
@@ -191,20 +199,33 @@ class di_numeric:
         dll.umfpack_di_free_numeric (byref(self.Numeric))
 
     def factor_numeric(self, matrix, Symbolic):
-        dll.umfpack_di_free_numeric (byref(self.Numeric))
-        self.status = dll.umfpack_di_numeric (matrix.AP, matrix.AI, matrix.AX, Symbolic.Symbolic, byref(self.Numeric), self.umf_control.Control, self.umf_control.Info)
+        if self.umf_control.is_complex:
+            dll.umfpack_zi_free_numeric (byref(self.Numeric))
+            NULL = c_void_p()
+            self.status = dll.umfpack_zi_numeric (matrix.AP, matrix.AI, matrix.AX, NULL, Symbolic.Symbolic, byref(self.Numeric), self.umf_control.Control, self.umf_control.Info)
+        else:
+            dll.umfpack_di_free_numeric (byref(self.Numeric))
+            self.status = dll.umfpack_di_numeric (matrix.AP, matrix.AI, matrix.AX, Symbolic.Symbolic, byref(self.Numeric), self.umf_control.Control, self.umf_control.Info)
         return self.status
 
     def solve(self, matrix, x, b, transpose):
         X = c_void_p(x.buffer_info()[0])
         B = c_void_p(b.buffer_info()[0])
-        status = dll.umfpack_di_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, X, B, self.Numeric, self.umf_control.Control, self.umf_control.Info)
+        if self.umf_control.is_complex:
+            NULL = c_void_p()
+            status = dll.umfpack_zi_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, NULL, X, NULL, B, NULL, self.Numeric, self.umf_control.Control, self.umf_control.Info)
+        else:
+            status = dll.umfpack_di_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, X, B, self.Numeric, self.umf_control.Control, self.umf_control.Info)
         return self.status
 
     def determinant(self, x, r):
         X = c_void_p(x.buffer_info()[0])
         R = c_void_p(r.buffer_info()[0])
-        status = dll.umfpack_di_get_determinant (X, R, self.Numeric, self.umf_control.Info)
+        if self.umf_control.is_complex:
+            NULL = c_void_p()
+            status = dll.umfpack_zi_get_determinant (X, NULL, R, NULL, self.Numeric, self.umf_control.Info)
+        else:
+            status = dll.umfpack_di_get_determinant (X, R, self.Numeric, self.umf_control.Info)
         return self.status
 
 class di_triplet:
@@ -236,7 +257,26 @@ class di_matrix:
     def __del__(self):
         pass
 
-class umf_control_base:
+class umf_control:
+    def __init__(self, dllp, matrix_type):
+        global dll
+        self.timer = None
+        dll = dllp
+        self.Control = None
+        self.Info = None
+        # expected attributes
+        self.matrix_format = "csc"
+        self.matrix_type = "real"
+        if matrix_type == "real":
+            self.is_complex = False
+        elif matrix_type == "complex":
+            self.is_complex = True
+        else:
+            raise RuntimeError("Unknown matrix_type real/complex")
+
+    def __del__(self):
+        # having a destructor is preventing segmentation fault
+        dll = None
     def tic(self):
         self.timer = (c_double * 2)()
         dll.umfpack_tic(byref(self.timer))
@@ -246,74 +286,11 @@ class umf_control_base:
         print ("\numfpack complete.\nTotal time: %5.2f seconds (CPU time), %5.2f seconds (wallclock time)\n" % ( self.timer [1], self.timer [0]))
 
     def set_defaults(self):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def init_verbose(self):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_vector(self, b, label):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_triplet(self, tm):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def triplet_to_col(self, tm):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_matrix(self, matrix):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_info(self):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_status(self):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def error_on_result(self, status, msg):
-        if status < 0:
-            self.print_info(self.Info)
-            self.print_status (status)
-            raise RuntimeError("%s failed" % (msg,))
-
-    def symbolic(self, matrix):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_symbolic(self, Symbolic):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def numeric(self, matrix, Symbolic):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_numeric(self, Numeric):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def solve(self, matrix, x, b, Numeric, transpose):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def determinant(self, x, r, Numeric):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-    def print_determinant(self, x, r):
-        raise RuntimeError("NOT IMPLEMENTED")
-
-class di_umf_control(umf_control_base):
-    def __init__(self, dllp):
-        global dll
-        self.timer = None
-        dll = dllp
-        self.Control = None
-        self.Info = None
-        # expected attributes
-        self.matrix_format = "csc"
-        self.matrix_type = "real"
-
-    def __del__(self):
-        # having a destructor is preventing segmentation fault
-        dll = None
-
-    def set_defaults(self):
         self.Control = (c_double * UMFPACK_CONTROL)()
-        dll.umfpack_di_defaults(byref(self.Control))
+        if self.is_complex:
+            dll.umfpack_zi_defaults(byref(self.Control))
+        else:
+            dll.umfpack_di_defaults(byref(self.Control))
         self.Info = (c_int * UMFPACK_INFO)()
 
     def init_verbose(self):
@@ -321,24 +298,38 @@ class di_umf_control(umf_control_base):
         #    /* (otherwise, nothing will print) */
         self.Control [UMFPACK_PRL] = 6
         #    /* print the license agreement */
-        dll.umfpack_di_report_status (self.Control, UMFPACK_OK)
+        if self.is_complex:
+            dll.umfpack_zi_report_status (self.Control, UMFPACK_OK)
+        else:
+            dll.umfpack_di_report_status (self.Control, UMFPACK_OK)
         self.Control [UMFPACK_PRL] = 5
         #
         #    /* print the control parameters */
-        dll.umfpack_di_report_control(self.Control)
+        if self.is_complex:
+            dll.umfpack_zi_report_control(self.Control)
+        else:
+            dll.umfpack_di_report_control(self.Control)
 
     def print_vector(self, b, label):
         #    /* print the right-hand-side */
         print ("\n%s: " % (label,), flush=True, end="")
-        dll.umfpack_di_report_vector.argtypes = [c_int, c_void_p, c_void_p]
-        dll.umfpack_di_report_vector.restype = None
-        dll.umfpack_di_report_vector (len(b), b.buffer_info()[0], self.Control)
+        if self.is_complex:
+            NULL = (c_void_p)()
+            dll.umfpack_zi_report_vector.argtypes = [c_int, c_void_p, c_void_p, c_void_p]
+            dll.umfpack_zi_report_vector.restype = None
+            dll.umfpack_zi_report_vector (len(b)//2, b.buffer_info()[0], NULL, self.Control)
+        else:
+            dll.umfpack_di_report_vector.argtypes = [c_int, c_void_p, c_void_p]
+            dll.umfpack_di_report_vector.restype = None
+            dll.umfpack_di_report_vector (len(b), b.buffer_info()[0], self.Control)
 
     def print_triplet(self, tm):
         print ("\nA: ")
-        #print(n)
-        #print(nz)
-        dll.umfpack_di_report_triplet(tm.n, tm.n, tm.nz, tm.Ar, tm.Ac, tm.Av, self.Control)
+        if self.is_complex:
+            NULL = (c_void_p)()
+            dll.umfpack_zi_report_triplet(tm.n, tm.n, tm.nz, tm.Ar, tm.Ac, tm.Av, NULL, self.Control)
+        else:
+            dll.umfpack_di_report_triplet(tm.n, tm.n, tm.nz, tm.Ar, tm.Ac, tm.Av, self.Control)
 
     def triplet_to_col(self, tm):
         n = tm.n
@@ -347,54 +338,80 @@ class di_umf_control(umf_control_base):
         nz1 = max(nz,1) #; /* ensure arrays are not of size zero. */
         Ap = array.array('i', [0] * (n+1))
         Ai = array.array('i', [0] * (nz1))
-        Ax = array.array('d', [0] * (nz1))
-        matrix = di_matrix(self, Ap, Ai, Ax)
-        self.status = dll.umfpack_di_triplet_to_col (n, n, nz, tm.Ar, tm.Ac, tm.Av, matrix.AP, matrix.AI, matrix.AX, NULL)
+        if self.is_complex:
+            Ax = array.array('d', [0] * (2*nz1))
+            matrix = di_matrix(self, Ap, Ai, Ax)
+            self.status = dll.umfpack_zi_triplet_to_col (n, n, nz, tm.Ar, tm.Ac, tm.Av, NULL, matrix.AP, matrix.AI, matrix.AX, NULL, NULL)
+        else:
+            Ax = array.array('d', [0] * (nz1))
+            matrix = di_matrix(self, Ap, Ai, Ax)
+            self.status = dll.umfpack_di_triplet_to_col (n, n, nz, tm.Ar, tm.Ac, tm.Av, matrix.AP, matrix.AI, matrix.AX, NULL)
 
         if self.status < 0:
             dll.umfpack_di_report_status (self.Control, self.status)
-            raise RuntimeError("umfpack_di_triplet_to_col failed")
+            raise RuntimeError("umfpack triplet_to_col failed")
 
         return matrix
 
     def print_matrix(self, matrix):
         print("\nA: ")
-        dll.umfpack_di_report_matrix (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, 1, self.Control)
+        if self.is_complex:
+            NULL = (c_void_p)()
+            dll.umfpack_zi_report_matrix (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, NULL, 1, self.Control)
+        else:
+            dll.umfpack_di_report_matrix (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, 1, self.Control)
 
     def print_info(self):
-        dll.umfpack_di_report_info (self.Control, self.Info)
+        if self.is_complex:
+            dll.umfpack_zi_report_info (self.Control, self.Info)
+        else:
+            dll.umfpack_di_report_info (self.Control, self.Info)
 
     def print_status(self):
-        dll.umfpack_di_report_status (self.Control, self.status)
+        if self.is_complex:
+            dll.umfpack_zi_report_status (self.Control, self.status)
+        else:
+            dll.umfpack_di_report_status (self.Control, self.status)
+
+    def error_on_result(self, status, msg):
+        if status < 0:
+            self.print_info(self.Info)
+            self.print_status (status)
+            raise RuntimeError("%s failed" % (msg,))
 
     def symbolic(self, matrix):
         Symbolic = di_symbolic(self)
         self.status = Symbolic.factor_symbolic(matrix)
-        self.error_on_result(self.status, "umfpack_di_symbolic")
+        self.error_on_result(self.status, "umfpack symbolic")
         return Symbolic
 
     def print_symbolic(self, Symbolic):
         print("\nSymbolic factorization of A: ")
-        dll.umfpack_di_report_symbolic(Symbolic.Symbolic, self.Control)
-
+        if self.is_complex:
+            dll.umfpack_zi_report_symbolic(Symbolic.Symbolic, self.Control)
+        else:
+            dll.umfpack_di_report_symbolic(Symbolic.Symbolic, self.Control)
 
     def numeric(self, matrix, Symbolic):
         Numeric = di_numeric(self)
         self.status = Numeric.factor_numeric(matrix, Symbolic)
-        self.error_on_result(self.status, "umfpack_di_numeric")
+        self.error_on_result(self.status, "umfpack numeric")
         return Numeric
 
     def print_numeric(self, Numeric):
         print ("\nNumeric factorization of A: ")
-        dll.umfpack_di_report_numeric (Numeric.Numeric, self.Control)
+        if self.is_complex:
+            dll.umfpack_zi_report_numeric (Numeric.Numeric, self.Control)
+        else:
+            dll.umfpack_di_report_numeric (Numeric.Numeric, self.Control)
 
     def solve(self, matrix, x, b, Numeric, transpose):
         self.status = Numeric.solve(matrix, x, b, transpose)
-        self.error_on_result(self.status, "umfpack_di_solve")
+        self.error_on_result(self.status, "umfpack solve")
 
     def determinant(self, x, r, Numeric):
         self.status = Numeric.determinant(x, r)
-        self.error_on_result(self.status, "umfpack_di_get_determinant")
+        self.error_on_result(self.status, "umfpack get_determinant")
         return self.status
 
     def print_determinant(self, x, r):
@@ -405,7 +422,7 @@ class di_umf_control(umf_control_base):
 #/* -------------------------------------------------------------------------- */
 #/* resid: compute the residual, r = Ax-b or r = A'x=b and return maxnorm (r) */
 #/* -------------------------------------------------------------------------- */
-def resid ( transpose, matrix, x, r, b):
+def real_resid ( transpose, matrix, x, r, b):
   Ap = matrix.Ap
   Ai = matrix.Ai
   Ax = matrix.Ax
@@ -429,3 +446,33 @@ def resid ( transpose, matrix, x, r, b):
       norm = abs(r[i])
   return norm
 
+def complex_resid ( transpose, matrix, x, r, b):
+  Ap = matrix.Ap
+  Ai = matrix.Ai
+  Ax = matrix.Ax
+  f = 2
+  n = len(b)//f
+  for i in range(n):
+    r[f*i] = -b[f*i]
+  if (transpose):
+    for j in range(n):
+      for p in range(Ap[j], Ap[j+1]):
+        i = Ai [p]
+        r [f*j] += Ax [f*p] * x [f*i]
+  else:
+    for j in range(n):
+      for p in range(Ap[j], Ap[j+1]):
+        i = Ai [p]
+        r [f*i] += Ax [f*p] * x [f*j]
+  norm = 0.0
+  print(len(r))
+  for i in range(n):
+    if abs(r[2*i]) > norm:
+      norm = abs(r[2*i])
+  return norm
+
+def resid ( transpose, is_complex, matrix, x, r, b):
+    if is_complex:
+        return complex_resid(transpose, matrix, x, r, b)
+    else:
+        return real_resid(transpose, matrix, x, r, b)

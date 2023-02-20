@@ -20,7 +20,7 @@ def init(**kwargs):
                 break
     if mcount != 0:
         raise RuntimeError('Missing %d math functions' % mcount)
-    return umf.di_umf_control(umf.dll)
+    return umf.umf_control(umf.dll, kwargs['matrix_type'])
 
 def matrix(**kwargs):
     if kwargs["matrix_format"] != "csc":
