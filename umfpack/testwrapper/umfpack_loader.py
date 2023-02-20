@@ -236,7 +236,67 @@ class di_matrix:
     def __del__(self):
         pass
 
-class di_umf_control:
+class umf_control_base:
+    def tic(self):
+        self.timer = (c_double * 2)()
+        dll.umfpack_tic(byref(self.timer))
+
+    def toc(self):
+        dll.umfpack_toc (self.timer)
+        print ("\numfpack complete.\nTotal time: %5.2f seconds (CPU time), %5.2f seconds (wallclock time)\n" % ( self.timer [1], self.timer [0]))
+
+    def set_defaults(self):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def init_verbose(self):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_vector(self, b, label):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_triplet(self, tm):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def triplet_to_col(self, tm):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_matrix(self, matrix):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_info(self):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_status(self):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def error_on_result(self, status, msg):
+        if status < 0:
+            self.print_info(self.Info)
+            self.print_status (status)
+            raise RuntimeError("%s failed" % (msg,))
+
+    def symbolic(self, matrix):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_symbolic(self, Symbolic):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def numeric(self, matrix, Symbolic):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_numeric(self, Numeric):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def solve(self, matrix, x, b, Numeric, transpose):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def determinant(self, x, r, Numeric):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+    def print_determinant(self, x, r):
+        raise RuntimeError("NOT IMPLEMENTED")
+
+class di_umf_control(umf_control_base):
     def __init__(self, dllp):
         global dll
         self.timer = None
@@ -250,14 +310,6 @@ class di_umf_control:
     def __del__(self):
         # having a destructor is preventing segmentation fault
         dll = None
-
-    def tic(self):
-        self.timer = (c_double * 2)()
-        dll.umfpack_tic(byref(self.timer))
-
-    def toc(self):
-        dll.umfpack_toc (self.timer)
-        print ("\numfpack_di_demo complete.\nTotal time: %5.2f seconds (CPU time), %5.2f seconds (wallclock time)\n" % ( self.timer [1], self.timer [0]))
 
     def set_defaults(self):
         self.Control = (c_double * UMFPACK_CONTROL)()
@@ -314,12 +366,6 @@ class di_umf_control:
 
     def print_status(self):
         dll.umfpack_di_report_status (self.Control, self.status)
-
-    def error_on_result(self, status, msg):
-        if status < 0:
-            self.print_info(self.Info)
-            self.print_status (status)
-            raise RuntimeError("%s failed" % (msg,))
 
     def symbolic(self, matrix):
         Symbolic = di_symbolic(self)
