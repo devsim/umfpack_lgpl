@@ -170,7 +170,7 @@ class di_symbolic:
 
     def factor_symbolic(self, matrix):
         dll.umfpack_di_free_symbolic (byref(self.Symbolic))
-        status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), umf_control.Control, umf_control.Info)
+        status = dll.umfpack_di_symbolic (matrix.n, matrix.n, matrix.AP, matrix.AI, matrix.AX, byref(self.Symbolic), self.umf_control.Control, self.umf_control.Info)
         return status
 
 class di_numeric:
@@ -180,6 +180,23 @@ class di_numeric:
 
     def __del__(self):
         dll.umfpack_di_free_numeric (byref(self.Numeric))
+
+    def factor_numeric(self, matrix, Symbolic):
+        dll.umfpack_di_free_numeric (byref(self.Numeric))
+        status = dll.umfpack_di_numeric (matrix.AP, matrix.AI, matrix.AX, Symbolic.Symbolic, byref(self.Numeric), self.umf_control.Control, self.umf_control.Info)
+        return status
+
+    def solve(self, matrix, x, b, transpose):
+        X = c_void_p(x.buffer_info()[0])
+        B = c_void_p(b.buffer_info()[0])
+        status = dll.umfpack_di_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, X, B, self.Numeric, self.umf_control.Control, self.umf_control.Info)
+        return status
+
+    def determinant(self, x, r):
+        X = c_void_p(x.buffer_info()[0])
+        R = c_void_p(r.buffer_info()[0])
+        status = dll.umfpack_di_get_determinant (X, R, self.Numeric, self.umf_control.Info)
+        return status
 
 class di_triplet:
     def __init__(self, uc, Arow, Acol, Aval):
@@ -294,7 +311,7 @@ class umf_control:
 
     def symbolic(self, matrix):
         Symbolic = di_symbolic(self)
-        status = factor_symbolic (matrix)
+        status = Symbolic.factor_symbolic(matrix)
         self.error_on_result(status, "umfpack_di_symbolic")
         return Symbolic
 
@@ -305,7 +322,7 @@ class umf_control:
 
     def numeric(self, matrix, Symbolic):
         Numeric = di_numeric(self)
-        status = dll.umfpack_di_numeric (matrix.AP, matrix.AI, matrix.AX, Symbolic.Symbolic, byref(Numeric.Numeric), self.Control, self.Info)
+        status = Numeric.factor_numeric(matrix, Symbolic)
         self.error_on_result(status, "umfpack_di_numeric")
         return Numeric
 
@@ -314,16 +331,12 @@ class umf_control:
         dll.umfpack_di_report_numeric (Numeric.Numeric, self.Control)
 
     def solve(self, matrix, x, b, Numeric, transpose):
-        X = c_void_p(x.buffer_info()[0])
-        B = c_void_p(b.buffer_info()[0])
-        status = dll.umfpack_di_solve (get_transpose(transpose), matrix.AP, matrix.AI, matrix.AX, X, B, Numeric.Numeric, self.Control, self.Info)
+        status = Numeric.solve(matrix, x, b, transpose)
         self.error_on_result(status, "umfpack_di_solve")
         return b
 
     def determinant(self, x, r, Numeric):
-        X = c_void_p(x.buffer_info()[0])
-        R = c_void_p(r.buffer_info()[0])
-        status = dll.umfpack_di_get_determinant (X, R, Numeric.Numeric, self.Info)
+        status = Numeric.determinant(x, r)
         self.error_on_result(status, "umfpack_di_get_determinant")
         return status
 
