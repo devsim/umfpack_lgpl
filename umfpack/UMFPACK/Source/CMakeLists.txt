@@ -257,6 +257,13 @@ $<TARGET_OBJECTS:GROUP15_OBJS>
 $<TARGET_OBJECTS:GROUP16_OBJS>
 )
 TARGET_LINK_LIBRARIES(umfpack_lgpl PRIVATE amd blaswrapper -lm)
+IF (APPLE)
+SET_TARGET_PROPERTIES(umfpack_lgpl PROPERTIES
+  LINK_FLAGS "-undefined dynamic_lookup -flat_namespace"
+  #INSTALL_RPATH "@loader_path;@loader_path/../lib;@loader_path/../../../../lib;@executable_path/../lib"
+  #BUILD_WITH_INSTALL_RPATH TRUE
+)
+ENDIF (APPLE)
 
 FOREACH (I umfpack_lgpl)
 ADD_CUSTOM_COMMAND(TARGET ${I}
