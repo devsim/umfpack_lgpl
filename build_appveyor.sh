@@ -4,7 +4,7 @@ set -u
 
 GENERATOR="$1"
 AOPTION="$2"
-BUILDDIR="umfpack/$3"
+BUILDDIR="$3"
 
 (\
 mkdir -p ${BUILDDIR} && \
