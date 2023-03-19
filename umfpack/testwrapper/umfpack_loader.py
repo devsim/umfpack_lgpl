@@ -163,7 +163,7 @@ def set_python_print_callback(gdata):
     return dcb
 
 def get_info():
-    return (c_int * uml.UMFPACK_INFO)();
+    return (c_double * uml.UMFPACK_INFO)();
 
 class di_symbolic:
     def __init__(self, uc):
@@ -299,7 +299,7 @@ class umf_control:
             self.gdata.dll.umfpack_zi_defaults(byref(self.Control))
         else:
             self.gdata.dll.umfpack_di_defaults(byref(self.Control))
-        self.Info = (c_int * UMFPACK_INFO)()
+        self.Info = (c_double * UMFPACK_INFO)()
 
     def init_verbose(self):
         #    /* change the default print level for this demo */
