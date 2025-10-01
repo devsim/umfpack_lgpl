@@ -11,6 +11,6 @@ BUILDDIR="$4"
 mkdir -p ${BUILDDIR} && \
 cd ${BUILDDIR} && \
 cmake -G "${GENERATOR}" -A "${AOPTION}" -T "${TOOLSET}" ../umfpack && \
-cmake --build . --config Release -- //m //nologo //verbosity:minimal \
+cmake --build . --config Release --parallel 4 -- //nologo //verbosity:minimal \
 )
 
